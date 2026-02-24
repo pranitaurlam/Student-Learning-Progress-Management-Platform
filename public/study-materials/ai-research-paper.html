@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Research Paper: Transformers in Vision</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.8;
+            color: #000;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            max-width: 210mm;
+            background: #fff;
+        }
+
+        .paper-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .authors {
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .abstract {
+            font-size: 0.9em;
+            margin: 0 40px 40px 40px;
+            text-align: justify;
+        }
+
+        .abstract-title {
+            font-weight: bold;
+            text-align: center;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 18px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .ref {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .download-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="javascript:window.print()" class="download-btn">Print / PDF</a>
+
+    <div class="paper-header">
+        <h1>An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale</h1>
+        <div class="authors">Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai</div>
+        <div>Google Research, Brain Team</div>
+    </div>
+
+    <div class="abstract">
+        <span class="abstract-title">Abstract</span>
+        While the Transformer architecture has become the de-facto standard for natural language processing tasks, its
+        applications to computer vision remain limited. In vision, attention is either applied in conjunction with
+        convolutional networks, or used to replace certain components of convolutional networks while keeping their
+        overall structure in place. We show that this reliance on CNNs is not necessary and a pure transformer applied
+        directly to sequences of image patches can perform very well on image classification tasks.
+    </div>
+
+    <h2>1. Introduction</h2>
+    <p>Self-attention-based architectures, in particular Transformers, have become the model of choice in natural
+        language processing (NLP). The dominant approach is to pre-train on a large text corpus and then fine-tune on a
+        smaller task-specific dataset. With their computational efficiency and scalability, it has become possible to
+        train models of unprecedented size, with over 100B parameters.</p>
+
+    <h2>2. Method</h2>
+    <p>In computer vision, however, convolutional architectures remain dominant. Inspired by NLP successes, we
+        experiment with applying a standard Transformer directly to images, with the fewest possible modifications. To
+        do so, we split an image into patches and provide the sequence of linear embeddings of these patches as an input
+        to a Transformer. Image patches are treated the same way as tokens (words) in an NLP application. We train the
+        model on image classification in supervised fashion.</p>
+
+    <h2>3. Conclusion</h2>
+    <p>We have explored the direct application of Transformers to image recognition. Unlike prior works using
+        self-attention in computer vision, we do not introduce image-specific inductive biases into the architecture
+        architecture. Instead, we interpret an image as a sequence of patches and process it by a standard Transformer
+        encoder as used in NLP.</p>
+
+    <h2>References</h2>
+    <div class="ref">
+        [1] Vaswani et al. "Attention is all you need." NIPS 2017.<br>
+        [2] Devlin et al. "BERT: Pre-training of deep bidirectional transformers for language understanding." NAACL
+        2019.
+    </div>
+</body>
+
+</html>

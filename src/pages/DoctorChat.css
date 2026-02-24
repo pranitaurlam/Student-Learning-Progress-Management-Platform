@@ -1,0 +1,47 @@
+.doctor-chat-page {
+    min-height: calc(100vh - var(--nav-height));
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.doctor-header {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-icon {
+    font-size: 2.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.doctor-send-btn {
+    background: #0ea5e9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.doctor-send-btn:hover {
+    background: #0284c7;
+}
+
+.chat-bubble.doctor {
+    background: white;
+    color: #334155;
+    border-left: 4px solid #0ea5e9;
+}
+
+.chat-bubble.doctor .chat-bubble-label {
+    color: #0ea5e9;
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Cheat Sheet</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
+        .container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #306998; border-bottom: 2px solid #ffd43b; padding-bottom: 10px; }
+        h2 { color: #4b8bbe; margin-top: 30px; }
+        code { background: #f0f0f0; padding: 2px 5px; border-radius: 4px; font-family: 'Consolas', 'Monaco', monospace; color: #d63384; }
+        pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .section { margin-bottom: 20px; }
+        .download-btn { display: inline-block; background: #306998; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-bottom: 20px; }
+        .download-btn:hover { background: #26557b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:window.print()" class="download-btn">Download / Print PDF</a>
+        <h1>Python Cheat Sheet</h1>
+        
+        <div class="section">
+            <h2>Basics</h2>
+            <p><strong>Variables:</strong> <code>x = 5</code>, <code>name = "Alice"</code></p>
+            <p><strong>Print:</strong> <code>print("Hello World")</code></p>
+            <p><strong>Comments:</strong> <code># This is a comment</code></p>
+        </div>
+
+        <div class="section">
+            <h2>Data Types</h2>
+            <pre>
+str: "Hello"
+int: 10
+float: 20.5
+bool: True, False
+list: [1, 2, 3]
+dict: {"key": "value"}
+            </pre>
+        </div>
+
+        <div class="section">
+            <h2>Control Flow</h2>
+            <pre>
+if x > 10:
+    print("Large")
+elif x == 10:
+    print("Equal")
+else:
+    print("Small")
+
+# Loops
+for i in range(5):
+    print(i)
+
+while x > 0:
+    x -= 1
+            </pre>
+        </div>
+
+        <div class="section">
+            <h2>Functions</h2>
+            <pre>
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("Bob"))
+            </pre>
+        </div>
+    </div>
+</body>
+</html>

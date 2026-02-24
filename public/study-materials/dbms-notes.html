@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBMS Full Notes</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fffcf5;
+        }
+
+        .container {
+            background: white;
+            padding: 50px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        h2 {
+            color: #e67e22;
+            margin-top: 40px;
+        }
+
+        h3 {
+            color: #7f8c8d;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #e67e22;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-family: sans-serif;
+        }
+
+        .download-btn:hover {
+            background: #d35400;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="javascript:window.print()" class="download-btn">Save as PDF</a>
+        <h1>Database Management Systems (DBMS)</h1>
+
+        <h2>1. Introduction</h2>
+        <p>A <strong>Database Management System (DBMS)</strong> is software that enables users to define, create,
+            maintain, and control access to the database.</p>
+
+        <h3>Key Characteristics:</h3>
+        <ul>
+            <li>Self-describing nature of a database system.</li>
+            <li>Insulation between programs and data, and data abstraction.</li>
+            <li>Support of multiple views of the data.</li>
+            <li>Sharing of data and multi-user transaction processing.</li>
+        </ul>
+
+        <h2>2. Data Models</h2>
+        <p>Data models define how the logical structure of a database is modeled.</p>
+        <ul>
+            <li><strong>Relational Model:</strong> Uses tables to represent data and relationships.</li>
+            <li><strong>Entity-Relationship (ER) Model:</strong> High-level conceptual data model.</li>
+            <li><strong>Object-Oriented Model:</strong> Data represented as objects.</li>
+        </ul>
+
+        <h2>3. Normalization</h2>
+        <p>Normalization is the process of organizing data in a database.</p>
+        <p><span class="highlight">1NF (First Normal Form):</span> Eliminate repeating groups.</p>
+        <p><span class="highlight">2NF (Second Normal Form):</span> Eliminate redundant data.</p>
+        <p><span class="highlight">3NF (Third Normal Form):</span> Eliminate columns not dependent on key.</p>
+
+        <h2>4. SQL Basics</h2>
+        <p>Structured Query Language (SQL) is the standard language for relational databases.</p>
+        <ul>
+            <li><strong>DDL (Data Definition Language):</strong> CREATE, ALTER, DROP</li>
+            <li><strong>DML (Data Manipulation Language):</strong> SELECT, INSERT, UPDATE, DELETE</li>
+            <li><strong>DCL (Data Control Language):</strong> GRANT, REVOKE</li>
+        </ul>
+    </div>
+</body>
+
+</html>
