@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { FaFire, FaQuestionCircle, FaTrophy, FaClipboardList, FaPenFancy, FaBookOpen, FaBullhorn, FaCalendarAlt, FaFolderOpen } from 'react-icons/fa';
 import { MdCheckCircle } from 'react-icons/md';
@@ -69,6 +69,12 @@ const studyMaterialData = [
 ];
 
 function getStreakData() {
+    const getDefaultStreak = () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return { streak: 0, longest: 0, points: 0, lastDate: yesterday.toDateString(), pressedToday: false };
+    };
+
     const saved = localStorage.getItem('mindforge_streak');
     if (saved) {
         try {
@@ -80,35 +86,34 @@ function getStreakData() {
                 return { ...data, pressedToday: true };
             }
 
-            // Demo enhancement: If they have a streak of 0, give them the mock streak
-            if (data.streak === 0) {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                return { streak: 5, longest: 5, points: 50, lastDate: yesterday.toDateString(), pressedToday: false };
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            // If the last pressed date is NOT yesterday, the streak is broken
+            if (data.lastDate !== yesterday.toDateString()) {
+                data.streak = 0;
             }
 
             return { ...data, pressedToday: false };
         } catch {
-            // Fallback to mock data
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            return { streak: 5, longest: 5, points: 50, lastDate: yesterday.toDateString(), pressedToday: false };
+            return getDefaultStreak();
         }
     }
 
-    // Default mock data for new users
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return { streak: 5, longest: 5, points: 50, lastDate: yesterday.toDateString(), pressedToday: false };
+    return getDefaultStreak();
 }
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const [streakData, setStreakData] = useState(getStreakData);
     const [assignments, setAssignments] = useState([
         { id: 1, title: 'Neural Networks Basics', subject: 'AI/ML', due: 'Today, 11:59 PM', status: 'Pending', file: null },
         { id: 2, title: 'Binary Trees Implementation', subject: 'DSA', due: 'Tomorrow', status: 'Pending', file: null },
         { id: 3, title: 'React Hooks Deep Dive', subject: 'Web Dev', due: 'In 2 days', status: 'In Progress', file: null },
     ]);
+
+    const goToMockTests = () => navigate('/mock-tests');
+    const goToPracticeQuestions = () => navigate('/practice-questions');
 
 
     useEffect(() => {
@@ -221,24 +226,58 @@ export default function Dashboard() {
                 <section className="quick-actions">
                     <h2 className="section-title">Study Center</h2>
                     <div className="actions-grid">
-                        <div className="action-card mock-test">
+                        <div
+                            className="action-card mock-test"
+                            onClick={goToMockTests}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') goToMockTests();
+                            }}
+                        >
                             <div className="action-icon-wrapper">
                                 <FaClipboardList className="action-icon" />
                             </div>
                             <div className="action-content">
                                 <h3>Mock Tests</h3>
                                 <p>Take full-length exams to simulate real test conditions.</p>
-                                <button className="action-btn">Start Test →</button>
+                                <button
+                                    type="button"
+                                    className="action-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        goToMockTests();
+                                    }}
+                                >
+                                    Start Test →
+                                </button>
                             </div>
                         </div>
-                        <div className="action-card practice">
+                        <div
+                            className="action-card practice"
+                            onClick={goToPracticeQuestions}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') goToPracticeQuestions();
+                            }}
+                        >
                             <div className="action-icon-wrapper">
                                 <FaPenFancy className="action-icon" />
                             </div>
                             <div className="action-content">
                                 <h3>Practice Questions</h3>
                                 <p>Solve topic-wise questions to strengthen your weak areas.</p>
-                                <button className="action-btn">Start Practice →</button>
+                                <button
+                                    type="button"
+                                    className="action-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        goToPracticeQuestions();
+                                    }}
+                                >
+                                    Start Practice →
+                                </button>
                             </div>
                         </div>
                     </div>

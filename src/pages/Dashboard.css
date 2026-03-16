@@ -237,6 +237,10 @@
     backdrop-filter: blur(12px);
 }
 
+.action-card.mock-test {
+    cursor: pointer;
+}
+
 .action-card:hover {
     transform: translateY(-4px);
     border-color: rgba(139, 92, 246, 0.5);

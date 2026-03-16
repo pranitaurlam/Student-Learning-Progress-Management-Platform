@@ -1,0 +1,229 @@
+.mock-tests-page {
+  min-height: calc(100vh - var(--nav-height));
+  padding: 28px 0 60px;
+}
+
+.mock-tests-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.mock-tests-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mock-tests-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  font-size: 1.3rem;
+}
+
+.mock-tests-title h2 {
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.mock-tests-title p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 560px;
+}
+
+.mock-tests-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.mock-tests-back {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  transition: all 0.25s ease;
+}
+
+.mock-tests-back:hover {
+  color: white;
+  border-color: rgba(139, 92, 246, 0.45);
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-1px);
+}
+
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.subject-card {
+  background: var(--dark-card);
+  border: 1px solid var(--dark-card-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.subject-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 12px 35px rgba(107, 33, 168, 0.2);
+}
+
+.subject-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 14px;
+}
+
+.subject-heading h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.subject-count {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.subject-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  transition: all 0.25s ease;
+}
+
+.subject-toggle:hover {
+  color: white;
+  border-color: rgba(139, 92, 246, 0.45);
+}
+
+.papers-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+
+.papers-wrap.open {
+  max-height: 680px;
+}
+
+.papers-grid {
+  padding: 0 18px 18px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.paper-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.paper-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(139, 92, 246, 0.35);
+  transform: translateY(-2px);
+}
+
+.paper-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.paper-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paper-chip {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.paper-open {
+  margin-top: 2px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.accent-blue .subject-toggle,
+.accent-blue .paper-open {
+  color: #93c5fd;
+}
+
+.accent-purple .subject-toggle,
+.accent-purple .paper-open {
+  color: #c4b5fd;
+}
+
+.accent-pink .subject-toggle,
+.accent-pink .paper-open {
+  color: #f9a8d4;
+}
+
+.accent-yellow .subject-toggle,
+.accent-yellow .paper-open {
+  color: #fde68a;
+}
+
+.accent-green .subject-toggle,
+.accent-green .paper-open {
+  color: #86efac;
+}
+
+@media (max-width: 900px) {
+  .subjects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .papers-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
