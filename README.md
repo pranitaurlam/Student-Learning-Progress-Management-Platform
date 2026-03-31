@@ -25,4 +25,4 @@ This project is maintained by:
 3. Run dev server: `npm run dev`
 
 ## Branch Info
-This branch belongs to contributor: **pranitaurlam**
+
