@@ -24,5 +24,6 @@ This project is maintained by:
 2. Install dependencies: `npm install`
 3. Run dev server: `npm run dev`
 
-## Branch Info
+## Collaborations
+by Urlam Pranita and Shain Garg
 
