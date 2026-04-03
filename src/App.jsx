@@ -15,6 +15,7 @@ import Planner from './pages/Planner';
 import StudyRoom from './pages/StudyRoom';
 import Certificates from './pages/Certificates';
 import Mistakes from './pages/Mistakes';
+import Leaderboard from './pages/Leaderboard';
 import './index.css';
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/study-room" element={<StudyRoom />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/mistakes" element={<Mistakes />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
       </Routes>
     </BrowserRouter>
   );

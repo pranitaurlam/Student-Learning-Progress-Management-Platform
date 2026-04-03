@@ -134,7 +134,7 @@ export default function MockTestRunner() {
       }).map(q => {
         const idx = questions.indexOf(q);
         return {
-          userId: 'student_1', // Using static ID as placeholder
+          userId: 'student_1',
           questionId: `${subject}-${paperId}-q${q._num}`,
           questionText: q.question,
           selectedAnswer: q.options[Number(answers[idx])],
@@ -154,6 +154,24 @@ export default function MockTestRunner() {
           });
         } catch (err) { console.error('Failed to log mistake:', err); }
       });
+
+      // ── SUBMIT RESULT TO LEADERBOARD ──
+      const resultData = {
+        userId: 'student_1',
+        userName: 'Pranita Urlam',
+        subject: subjectName,
+        marks: correct,
+        totalQuestions: mcqQs.length,
+        accuracy: record.accuracy,
+        timeSpent: record.timeUsed
+      };
+
+      fetch('http://localhost:5001/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultData)
+      }).catch(err => console.error('Failed to submit result:', err));
+
     } catch { /* ignore */ }
 
     setSubmitted(true);
