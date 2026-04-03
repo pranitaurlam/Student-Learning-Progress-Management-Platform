@@ -30,6 +30,26 @@ export default function QuestionDetail() {
     const handleSubmitMCQ = () => {
         if (selectedOption === null) return;
         setSubmitted(true);
+
+        // ── LOG MISTAKE IF INCORRECT ──
+        if (selectedOption !== question.correctOption) {
+            const mistake = {
+                userId: 'student_1',
+                questionId: `${subjectId}-${questionId}`,
+                questionText: question.statement,
+                selectedAnswer: question.options[selectedOption],
+                correctAnswer: question.options[question.correctOption],
+                explanation: question.explanation,
+                topic: subject.name,
+                difficulty: question.difficulty.toLowerCase()
+            };
+
+            fetch('http://localhost:5001/mistakes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(mistake)
+            }).catch(err => console.error('Failed to log mistake:', err));
+        }
     };
 
     const handleRunCode = () => {
@@ -68,6 +88,27 @@ export default function QuestionDetail() {
             const executionOutput = executor();
             setTestResults(executionOutput.results);
             setSubmitted(true);
+
+            // ── LOG MISTAKE IF ANY TEST CASE FAILED ──
+            const failed = executionOutput.results.some(r => !r.passed);
+            if (failed) {
+                const mistake = {
+                    userId: 'student_1',
+                    questionId: `${subjectId}-${questionId}`,
+                    questionText: question.statement,
+                    selectedAnswer: "Code Submission (Failed Test Cases)",
+                    correctAnswer: "See Solution / Pass All Test Cases",
+                    explanation: "Code failed some test cases. Review logic and try again.",
+                    topic: subject.name,
+                    difficulty: question.difficulty.toLowerCase()
+                };
+
+                fetch('http://localhost:5001/mistakes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mistake)
+                }).catch(err => console.error('Failed to log mistake:', err));
+            }
         } catch (e) {
             setError(e.message);
         }

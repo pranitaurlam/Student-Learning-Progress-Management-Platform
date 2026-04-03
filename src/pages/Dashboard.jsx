@@ -12,6 +12,7 @@ import {
     FaFolderOpen,
     FaVideo,
     FaAward,
+    FaExclamationTriangle,
 } from "react-icons/fa";
 import { MdCheckCircle } from "react-icons/md";
 import { IoSchool } from "react-icons/io5";
@@ -516,6 +517,33 @@ export default function Dashboard() {
                                     }}
                                 >
                                     View Now →
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            className="action-card mistakes"
+                            onClick={() => navigate("/mistakes")}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") navigate("/mistakes");
+                            }}
+                        >
+                            <div className="action-icon-wrapper">
+                                <FaExclamationTriangle className="action-icon" />
+                            </div>
+                            <div className="action-content">
+                                <h3>Error Log Book</h3>
+                                <p>Review your wrong answers and learn from your mistakes.</p>
+                                <button
+                                    type="button"
+                                    className="action-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate("/mistakes");
+                                    }}
+                                >
+                                    Log Book →
                                 </button>
                             </div>
                         </div>
