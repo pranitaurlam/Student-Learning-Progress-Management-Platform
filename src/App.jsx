@@ -13,6 +13,7 @@ import PracticeQuestions from './pages/PracticeQuestions';
 import QuestionDetail from './pages/QuestionDetail';
 import Planner from './pages/Planner';
 import StudyRoom from './pages/StudyRoom';
+import Certificates from './pages/Certificates';
 import './index.css';
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/practice-questions/:subjectId/:questionId" element={<QuestionDetail />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/study-room" element={<StudyRoom />} />
+        <Route path="/certificates" element={<Certificates />} />
       </Routes>
     </BrowserRouter>
   );

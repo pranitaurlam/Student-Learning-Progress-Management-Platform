@@ -24,6 +24,7 @@ export default function Navbar() {
           <NavLink to="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>
           <NavLink to="/ai-chat" onClick={() => setOpen(false)}>AI Doubt Chat</NavLink>
           <NavLink to="/study-room" onClick={() => setOpen(false)}>Study Room</NavLink>
+          <NavLink to="/certificates" onClick={() => setOpen(false)}>Certificates</NavLink>
           <NavLink to="/messages" onClick={() => setOpen(false)}>Messages</NavLink>
 
           <Link to="/login" className="navbar-login-btn" onClick={() => setOpen(false)}>

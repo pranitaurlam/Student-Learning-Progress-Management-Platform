@@ -11,6 +11,7 @@ import {
     FaCalendarAlt,
     FaFolderOpen,
     FaVideo,
+    FaAward,
 } from "react-icons/fa";
 import { MdCheckCircle } from "react-icons/md";
 import { IoSchool } from "react-icons/io5";
@@ -488,6 +489,33 @@ export default function Dashboard() {
                                     }}
                                 >
                                     Join Room →
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            className="action-card certificates"
+                            onClick={() => navigate("/certificates")}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") navigate("/certificates");
+                            }}
+                        >
+                            <div className="action-icon-wrapper">
+                                <FaAward className="action-icon" />
+                            </div>
+                            <div className="action-content">
+                                <h3>Certificates</h3>
+                                <p>View earned certificates and upload external ones.</p>
+                                <button
+                                    type="button"
+                                    className="action-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate("/certificates");
+                                    }}
+                                >
+                                    View Now →
                                 </button>
                             </div>
                         </div>
