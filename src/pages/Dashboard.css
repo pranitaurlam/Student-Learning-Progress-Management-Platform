@@ -269,6 +269,17 @@
     pointer-events: none;
 }
 
+.action-card.study-room::before {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
 .action-icon-wrapper {
     width: 60px;
     height: 60px;
@@ -287,6 +298,11 @@
 .practice .action-icon-wrapper {
     background: rgba(236, 72, 153, 0.1);
     color: #f472b6;
+}
+
+.study-room .action-icon-wrapper {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
 }
 
 .action-icon {
@@ -332,6 +348,12 @@
     border: 1px solid rgba(236, 72, 153, 0.3);
 }
 
+.study-room .action-btn {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
 .action-card:hover .action-btn {
     transform: translateX(4px);
 }
@@ -344,6 +366,11 @@
 .practice:hover .action-btn {
     background: rgba(236, 72, 153, 0.25);
     border-color: rgba(236, 72, 153, 0.6);
+}
+
+.study-room:hover .action-btn {
+    background: rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.6);
 }
 
 /* Performance Analytics */
