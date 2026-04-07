@@ -6,16 +6,16 @@ import './MockTestRunner.css';
 
 /* ── Paper templates (must match MockTests.jsx) ── */
 const PAPER_TEMPLATES = [
-  { n: 1,  difficulty: 'Easy',   mcq: 20, coding: 3,  descriptive: 2,  durationMins: 30  },
-  { n: 2,  difficulty: 'Easy',   mcq: 18, coding: 4,  descriptive: 3,  durationMins: 35  },
-  { n: 3,  difficulty: 'Easy',   mcq: 20, coding: 3,  descriptive: 2,  durationMins: 40  },
-  { n: 4,  difficulty: 'Medium', mcq: 15, coding: 7,  descriptive: 5,  durationMins: 50  },
-  { n: 5,  difficulty: 'Medium', mcq: 15, coding: 8,  descriptive: 5,  durationMins: 55  },
-  { n: 6,  difficulty: 'Medium', mcq: 12, coding: 8,  descriptive: 5,  durationMins: 60  },
-  { n: 7,  difficulty: 'Medium', mcq: 10, coding: 10, descriptive: 5,  durationMins: 60  },
-  { n: 8,  difficulty: 'Hard',   mcq: 10, coding: 10, descriptive: 5,  durationMins: 75  },
-  { n: 9,  difficulty: 'Hard',   mcq: 8,  coding: 12, descriptive: 5,  durationMins: 90  },
-  { n: 10, difficulty: 'Hard',   mcq: 5,  coding: 15, descriptive: 5,  durationMins: 120 },
+  { n: 1, difficulty: 'Easy', mcq: 20, coding: 3, descriptive: 2, durationMins: 30 },
+  { n: 2, difficulty: 'Easy', mcq: 18, coding: 4, descriptive: 3, durationMins: 35 },
+  { n: 3, difficulty: 'Easy', mcq: 20, coding: 3, descriptive: 2, durationMins: 40 },
+  { n: 4, difficulty: 'Medium', mcq: 15, coding: 7, descriptive: 5, durationMins: 50 },
+  { n: 5, difficulty: 'Medium', mcq: 15, coding: 8, descriptive: 5, durationMins: 55 },
+  { n: 6, difficulty: 'Medium', mcq: 12, coding: 8, descriptive: 5, durationMins: 60 },
+  { n: 7, difficulty: 'Medium', mcq: 10, coding: 10, descriptive: 5, durationMins: 60 },
+  { n: 8, difficulty: 'Hard', mcq: 10, coding: 10, descriptive: 5, durationMins: 75 },
+  { n: 9, difficulty: 'Hard', mcq: 8, coding: 12, descriptive: 5, durationMins: 90 },
+  { n: 10, difficulty: 'Hard', mcq: 5, coding: 15, descriptive: 5, durationMins: 120 },
 ];
 
 const DIFF_TIER = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
@@ -53,6 +53,7 @@ function formatTime(secs) {
 const TYPE_ICONS = { mcq: <FaListOl />, coding: <FaCode />, descriptive: <FaPenNib /> };
 const TYPE_LABELS = { mcq: 'MCQ', coding: 'Coding', descriptive: 'Descriptive' };
 const DIFF_COLOR = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function MockTestRunner() {
   const { subject, paperId } = useParams();
@@ -125,6 +126,35 @@ export default function MockTestRunner() {
       const prev = JSON.parse(localStorage.getItem('mindforge_test_history') || '[]');
       prev.push(record);
       localStorage.setItem('mindforge_test_history', JSON.stringify(prev));
+
+      // ── LOG MISTAKES TO BACKEND ──
+      const mistakes = mcqQs.filter(q => {
+        const idx = questions.indexOf(q);
+        const chosen = answers[idx];
+        return chosen !== undefined && Number(chosen) !== q.correct;
+      }).map(q => {
+        const idx = questions.indexOf(q);
+        return {
+          userId: 'student_1', // Using static ID as placeholder
+          questionId: `${subject}-${paperId}-q${q._num}`,
+          questionText: q.question,
+          selectedAnswer: q.options[Number(answers[idx])],
+          correctAnswer: q.options[q.correct],
+          explanation: q.explanation,
+          topic: subjectName,
+          difficulty: q.difficulty.toLowerCase()
+        };
+      });
+
+      mistakes.forEach(async (m) => {
+        try {
+          await fetch(`${API_URL}/mistakes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(m)
+          });
+        } catch (err) { console.error('Failed to log mistake:', err); }
+      });
     } catch { /* ignore */ }
 
     setSubmitted(true);

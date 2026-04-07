@@ -1,4 +1,4 @@
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { HiMenu, HiX } from 'react-icons/hi';
 import { IoSchool } from 'react-icons/io5';
@@ -6,6 +6,26 @@ import './Navbar.css';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isStaffView = location.pathname === '/staff';
+
+  const handleStaffLogin = () => {
+    const password = prompt('Enter Staff Password:');
+    if (password === 'Mentors@polaris123') {
+      setOpen(false);
+      navigate('/staff');
+    } else if (password !== null) {
+      alert('Incorrect password. Access denied.');
+    }
+  };
+
+  const handleStaffLogout = () => {
+    if (window.confirm('Log out from staff area?')) {
+      navigate('/');
+    }
+  };
 
   return (
     <nav className="navbar">
@@ -20,15 +40,29 @@ export default function Navbar() {
         </button>
 
         <div className={`navbar-links ${open ? 'open' : ''}`}>
-          <NavLink to="/" end onClick={() => setOpen(false)}>Home</NavLink>
-          <NavLink to="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>
-          <NavLink to="/ai-chat" onClick={() => setOpen(false)}>AI Doubt Chat</NavLink>
-          <NavLink to="/study-room" onClick={() => setOpen(false)}>Study Room</NavLink>
-          <NavLink to="/messages" onClick={() => setOpen(false)}>Messages</NavLink>
+          {!isStaffView ? (
+            <>
+              <NavLink to="/" end onClick={() => setOpen(false)}>Home</NavLink>
+              <NavLink to="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>
+              <NavLink to="/ai-chat" onClick={() => setOpen(false)}>AI Doubt Chat</NavLink>
+              <NavLink to="/mistakes" onClick={() => setOpen(false)}>My Mistakes</NavLink>
+              <NavLink to="/messages" onClick={() => setOpen(false)}>Messages</NavLink>
 
-          <Link to="/login" className="navbar-login-btn" onClick={() => setOpen(false)}>
-            Sign In
-          </Link>
+              <Link to="/login" className="navbar-login-btn" onClick={() => setOpen(false)}>
+                Sign In
+              </Link>
+              <button className="navbar-staff-btn" onClick={handleStaffLogin}>
+                Staff Only
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="staff-badge">Staff Mode</span>
+              <button className="navbar-staff-btn logout" onClick={handleStaffLogout}>
+                Exit Staff Area
+              </button>
+            </>
+          )}
         </div>
       </div>
     </nav>
