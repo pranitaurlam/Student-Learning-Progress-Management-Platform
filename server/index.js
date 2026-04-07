@@ -2,8 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const mistakeRoutes = require('./routes/mistakeRoutes');
 const path = require('path');
+const plannerRoutes = require('./routes/plannerRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -16,7 +17,8 @@ app.get('/api/health', (req, res) => {
     res.send('MindForge Mistakes API is running...');
 });
 
-app.use('/mistakes', mistakeRoutes);
+app.use('/planner', plannerRoutes);
+app.use('/messages', messageRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
