@@ -302,17 +302,6 @@
     pointer-events: none;
 }
 
-.action-card.leaderboard::before {
-    content: '';
-    position: absolute;
-    right: -20px;
-    top: -20px;
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, transparent 70%);
-    pointer-events: none;
-}
-
 .action-icon-wrapper {
     width: 60px;
     height: 60px;
@@ -346,11 +335,6 @@
 .mistakes .action-icon-wrapper {
     background: rgba(239, 68, 68, 0.1);
     color: #f87171;
-}
-
-.leaderboard .action-icon-wrapper {
-    background: rgba(251, 191, 36, 0.1);
-    color: #fbbf24;
 }
 
 .action-icon {
@@ -414,12 +398,6 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.leaderboard .action-btn {
-    background: rgba(251, 191, 36, 0.15);
-    color: #fbbf24;
-    border: 1px solid rgba(251, 191, 36, 0.3);
-}
-
 .action-card:hover .action-btn {
     transform: translateX(4px);
 }
@@ -447,11 +425,6 @@
 .mistakes:hover .action-btn {
     background: rgba(239, 68, 68, 0.25);
     border-color: rgba(239, 68, 68, 0.6);
-}
-
-.leaderboard:hover .action-btn {
-    background: rgba(251, 191, 36, 0.25);
-    border-color: rgba(251, 191, 36, 0.6);
 }
 
 /* Performance Analytics */

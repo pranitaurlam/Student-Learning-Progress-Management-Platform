@@ -11,6 +11,7 @@ export default function QuestionDetail() {
     const [submitted, setSubmitted] = useState(false);
     const [testResults, setTestResults] = useState(null);
     const [error, setError] = useState(null);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
     const subject = subjectsData.find(s => s.id === subjectId);
     const question = subject?.questions.find(q => q.id === parseInt(questionId));
@@ -31,6 +32,21 @@ export default function QuestionDetail() {
         if (selectedOption === null) return;
         setSubmitted(true);
 
+        // ── SAVE PRACTICE SCORE TO HISTORY ──
+        const isCorrect = selectedOption === question.correctOption;
+        try {
+            const prev = JSON.parse(localStorage.getItem('mindforge_practice_history') || '[]');
+            prev.push({
+                date: new Date().toISOString(),
+                subject: subject.name,
+                questionId: `${subjectId}-${questionId}`,
+                questionText: question.statement,
+                correct: isCorrect,
+                difficulty: question.difficulty,
+            });
+            localStorage.setItem('mindforge_practice_history', JSON.stringify(prev));
+        } catch { /* ignore */ }
+
         // ── LOG MISTAKE IF INCORRECT ──
         if (selectedOption !== question.correctOption) {
             const mistake = {
@@ -44,7 +60,7 @@ export default function QuestionDetail() {
                 difficulty: question.difficulty.toLowerCase()
             };
 
-            fetch('http://localhost:5001/mistakes', {
+            fetch(`${API_URL}/mistakes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(mistake)
@@ -103,7 +119,7 @@ export default function QuestionDetail() {
                     difficulty: question.difficulty.toLowerCase()
                 };
 
-                fetch('http://localhost:5001/mistakes', {
+                fetch(`${API_URL}/mistakes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(mistake)

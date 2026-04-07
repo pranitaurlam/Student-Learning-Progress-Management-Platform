@@ -53,6 +53,7 @@ function formatTime(secs) {
 const TYPE_ICONS = { mcq: <FaListOl />, coding: <FaCode />, descriptive: <FaPenNib /> };
 const TYPE_LABELS = { mcq: 'MCQ', coding: 'Coding', descriptive: 'Descriptive' };
 const DIFF_COLOR = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function MockTestRunner() {
   const { subject, paperId } = useParams();
@@ -134,7 +135,7 @@ export default function MockTestRunner() {
       }).map(q => {
         const idx = questions.indexOf(q);
         return {
-          userId: 'student_1',
+          userId: 'student_1', // Using static ID as placeholder
           questionId: `${subject}-${paperId}-q${q._num}`,
           questionText: q.question,
           selectedAnswer: q.options[Number(answers[idx])],
@@ -147,31 +148,13 @@ export default function MockTestRunner() {
 
       mistakes.forEach(async (m) => {
         try {
-          await fetch('http://localhost:5001/mistakes', {
+          await fetch(`${API_URL}/mistakes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(m)
           });
         } catch (err) { console.error('Failed to log mistake:', err); }
       });
-
-      // ── SUBMIT RESULT TO LEADERBOARD ──
-      const resultData = {
-        userId: 'student_1',
-        userName: 'Pranita Urlam',
-        subject: subjectName,
-        marks: correct,
-        totalQuestions: mcqQs.length,
-        accuracy: record.accuracy,
-        timeSpent: record.timeUsed
-      };
-
-      fetch('http://localhost:5001/results', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resultData)
-      }).catch(err => console.error('Failed to submit result:', err));
-
     } catch { /* ignore */ }
 
     setSubmitted(true);

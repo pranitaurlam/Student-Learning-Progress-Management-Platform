@@ -13,7 +13,6 @@ import {
     FaVideo,
     FaAward,
     FaExclamationTriangle,
-    FaTrophy
 } from "react-icons/fa";
 import { MdCheckCircle } from "react-icons/md";
 import { IoSchool } from "react-icons/io5";
@@ -545,33 +544,6 @@ export default function Dashboard() {
                                     }}
                                 >
                                     Log Book →
-                                </button>
-                            </div>
-                        </div>
-                        <div
-                            className="action-card leaderboard"
-                            onClick={() => navigate("/leaderboard")}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") navigate("/leaderboard");
-                            }}
-                        >
-                            <div className="action-icon-wrapper">
-                                <FaTrophy className="action-icon" />
-                            </div>
-                            <div className="action-content">
-                                <h3>Elite Leaderboard</h3>
-                                <p>See where you stand compared to your peers.</p>
-                                <button
-                                    type="button"
-                                    className="action-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate("/leaderboard");
-                                    }}
-                                >
-                                    My Rank →
                                 </button>
                             </div>
                         </div>

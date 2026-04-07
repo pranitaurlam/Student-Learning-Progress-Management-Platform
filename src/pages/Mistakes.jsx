@@ -12,6 +12,8 @@ export default function Mistakes() {
     const [filterTopic, setFilterTopic] = useState('All');
     const userId = 'student_1'; // Consistent with static ID used in logging
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
     useEffect(() => {
         fetchMistakes();
     }, []);
@@ -19,7 +21,7 @@ export default function Mistakes() {
     const fetchMistakes = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`http://localhost:5001/mistakes/${userId}`);
+            const res = await fetch(`${API_URL}/mistakes/${userId}`);
             const data = await res.json();
             setMistakes(data);
         } catch (err) {
@@ -31,7 +33,7 @@ export default function Mistakes() {
 
     const handleMarkRevised = async (id) => {
         try {
-            await fetch(`http://localhost:5001/mistakes/${id}`, { method: 'DELETE' });
+            await fetch(`${API_URL}/mistakes/${id}`, { method: 'DELETE' });
             setMistakes(mistakes.filter(m => m._id !== id));
         } catch (err) {
             console.error('Failed to delete mistake:', err);
@@ -43,7 +45,7 @@ export default function Mistakes() {
 
         const toDelete = filteredMistakes.map(m => m._id);
         for (const id of toDelete) {
-            await fetch(`http://localhost:5001/mistakes/${id}`, { method: 'DELETE' });
+            await fetch(`${API_URL}/mistakes/${id}`, { method: 'DELETE' });
         }
         setMistakes(mistakes.filter(m => !toDelete.includes(m._id)));
     };
