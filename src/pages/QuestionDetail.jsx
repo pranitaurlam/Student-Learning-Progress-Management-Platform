@@ -11,7 +11,21 @@ export default function QuestionDetail() {
     const [submitted, setSubmitted] = useState(false);
     const [testResults, setTestResults] = useState(null);
     const [error, setError] = useState(null);
+    const [studentName, setStudentName] = useState(localStorage.getItem('mindforge_student_name') || '');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
+    // Ensure student name exists
+    useEffect(() => {
+        if (!studentName) {
+            const name = prompt("Please enter your name to track your practice score:");
+            if (name) {
+                setStudentName(name);
+                localStorage.setItem('mindforge_student_name', name);
+            } else {
+                setStudentName('Student');
+            }
+        }
+    }, [studentName]);
 
     const subject = subjectsData.find(s => s.id === subjectId);
     const question = subject?.questions.find(q => q.id === parseInt(questionId));
@@ -38,6 +52,7 @@ export default function QuestionDetail() {
             const prev = JSON.parse(localStorage.getItem('mindforge_practice_history') || '[]');
             prev.push({
                 date: new Date().toISOString(),
+                studentName: studentName || 'Student',
                 subject: subject.name,
                 questionId: `${subjectId}-${questionId}`,
                 questionText: question.statement,

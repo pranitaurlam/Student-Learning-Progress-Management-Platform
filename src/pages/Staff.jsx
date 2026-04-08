@@ -573,17 +573,19 @@ export default function Staff() {
                         <div className="scores-section">
                             <div className="scores-section-title"><FaTrophy className="score-sec-icon gold" /> Mock Test Results</div>
                             <div className="assignments-table">
-                                <div className="table-head" style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1fr 80px' }}>
+                                <div className="table-head" style={{ gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr 1fr 80px' }}>
                                     <span>Date</span>
+                                    <span>Student</span>
                                     <span>Subject</span>
                                     <span>Difficulty</span>
                                     <span>Accuracy</span>
-                                    <span>Questions</span>
+                                    <span>Marks</span>
                                 </div>
                                 {mockHistory.length === 0 && <div className="empty-state">No mock test attempts recorded yet.</div>}
                                 {[...mockHistory].reverse().map((r, i) => (
-                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1fr 80px' }}>
-                                        <span className="row-due">{new Date(r.date).toLocaleString()}</span>
+                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr 1fr 80px' }}>
+                                        <span className="row-due">{new Date(r.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                        <span className="row-title" style={{ fontWeight: 600 }}>{r.studentName || 'Student'}</span>
                                         <span><span className="subj-pill" style={{ '--c': SUBJECT_COLORS[r.subjectName] || '#a78bfa' }}>{r.subjectName || r.subject}</span></span>
                                         <span className="row-due" style={{ textTransform: 'capitalize' }}>{r.difficulty}</span>
                                         <span>
@@ -591,7 +593,7 @@ export default function Staff() {
                                                 {r.accuracy}%
                                             </span>
                                         </span>
-                                        <span className="row-due">{r.attempted}</span>
+                                        <span className="row-due" style={{ fontWeight: 600 }}>{r.mcqCorrect}/{r.mcqTotal}</span>
                                     </div>
                                 ))}
                             </div>
@@ -601,7 +603,8 @@ export default function Staff() {
                         <div className="scores-section">
                             <div className="scores-section-title"><FaStar className="score-sec-icon blue" /> Practice Question Attempts</div>
                             <div className="assignments-table">
-                                <div className="table-head" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
+                                <div className="table-head" style={{ gridTemplateColumns: '1.2fr 1.8fr 1fr 1fr 1fr' }}>
+                                    <span>Student</span>
                                     <span>Question</span>
                                     <span>Subject</span>
                                     <span>Difficulty</span>
@@ -609,8 +612,9 @@ export default function Staff() {
                                 </div>
                                 {practiceHistory.length === 0 && <div className="empty-state">No practice attempts recorded yet.</div>}
                                 {[...practiceHistory].reverse().map((r, i) => (
-                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
-                                        <span className="row-title" style={{ fontSize: '0.88rem' }}>{r.questionText?.slice(0, 60)}{r.questionText?.length > 60 ? '…' : ''}</span>
+                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '1.2fr 1.8fr 1fr 1fr 1fr' }}>
+                                        <span className="row-title" style={{ fontWeight: 600 }}>{r.studentName || 'Student'}</span>
+                                        <span className="row-title" style={{ fontSize: '0.88rem' }}>{r.questionText?.slice(0, 50)}{r.questionText?.length > 50 ? '…' : ''}</span>
                                         <span><span className="subj-pill" style={{ '--c': SUBJECT_COLORS[r.subject] || '#a78bfa' }}>{r.subject}</span></span>
                                         <span className="row-due" style={{ textTransform: 'capitalize' }}>{r.difficulty}</span>
                                         <span>
