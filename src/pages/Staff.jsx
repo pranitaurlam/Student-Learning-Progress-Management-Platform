@@ -100,10 +100,11 @@ export default function Staff() {
         const doubt = messagesState.find(m => m.id === id);
         if (!doubt) return;
 
-        // Password check: Name + 123
+        // Password check: Name + 123 (excluding "Prof. ")
         if (!unlockedIds.includes(id)) {
             const pass = prompt(`Enter password to unlock ${doubt.sender}'s chat:`);
-            const expected = `${doubt.sender}123`;
+            const cleanName = doubt.sender.replace(/^Prof\.\s*/, '');
+            const expected = `${cleanName}123`;
             if (pass !== expected) {
                 alert("Incorrect password!");
                 return;
