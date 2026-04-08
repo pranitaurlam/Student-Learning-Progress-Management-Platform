@@ -3,8 +3,9 @@ import {
     FaUserShield, FaCalendarAlt, FaBullhorn, FaBookOpen,
     FaPlus, FaTrash, FaEdit, FaCheck, FaTimes,
     FaUsers, FaChartBar, FaClock, FaTrophy, FaStar,
-    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync
+    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments
 } from 'react-icons/fa';
+import { IoArrowBack } from 'react-icons/io5';
 import './Staff.css';
 
 const SUBJECTS = ['AI/ML', 'DSA', 'Web Dev', 'DBMS', 'Python'];
@@ -32,6 +33,7 @@ const TABS = [
     { key: 'timetable', label: 'Timetable', icon: FaCalendarAlt, color: '#a78bfa' },
     { key: 'announcements', label: 'Announcements', icon: FaBullhorn, color: '#f472b6' },
     { key: 'assignments', label: 'Assignments', icon: FaBookOpen, color: '#34d399' },
+    { key: 'messages', label: 'Messages', icon: FaComments, color: '#ec4899' },
     { key: 'scores', label: 'Student Scores', icon: FaTrophy, color: '#fbbf24' },
     { key: 'materials', label: 'Study Material', icon: FaFolderOpen, color: '#60a5fa' },
     { key: 'attendance', label: 'Attendance', icon: FaQrcode, color: '#f87171' },
@@ -47,6 +49,61 @@ const SUBJECT_COLORS = {
 
 export default function Staff() {
     const [activeTab, setActiveTab] = useState('timetable');
+
+    /* ── Student Doubts (Messages) ── */
+    const STORAGE_KEY = 'mindforge_messages';
+    const [messagesState, setMessagesState] = useState([]);
+    const [activeDoubtId, setActiveDoubtId] = useState(null);
+    const [replyText, setReplyText] = useState('');
+
+    useEffect(() => {
+        if (activeTab === 'messages') {
+            const load = () => {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) setMessagesState(JSON.parse(stored));
+                } catch (e) { }
+            };
+            load();
+            const interval = setInterval(load, 2000);
+            return () => clearInterval(interval);
+        }
+    }, [activeTab]);
+
+    const activeDoubt = messagesState.find((m) => m.id === activeDoubtId);
+
+    const openDoubt = (id) => {
+        setActiveDoubtId(id);
+        setReplyText('');
+        // mark staff as read
+        const updated = messagesState.map(c => c.id === id ? { ...c, unreadStatus: { ...c.unreadStatus, staff: false } } : c);
+        setMessagesState(updated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    };
+
+    const sendReply = () => {
+        if (!replyText.trim() || !activeDoubtId) return;
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const updated = messagesState.map(c =>
+            c.id === activeDoubtId ? {
+                ...c,
+                preview: replyText.trim(),
+                time: 'Just now',
+                unreadStatus: { student: true, staff: false },
+                messages: [...c.messages, { from: 'mentor', text: replyText.trim(), time: timeStr }]
+            } : c
+        );
+        setMessagesState(updated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        setReplyText('');
+    };
+
+    const handleReplyKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendReply();
+        }
+    };
 
     /* ── Timetable ── */
     const [timetable, setTimetable] = useState(initTimetable);
@@ -625,6 +682,79 @@ export default function Staff() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ────── MESSAGES ────── */}
+                {activeTab === 'messages' && (
+                    <div className="tab-panel">
+                        <div className="panel-intro">
+                            <h2>Messages</h2>
+                            <p>Read and reply to messages sent by students.</p>
+                        </div>
+                        <div className="messages-layout" style={{ height: 500, borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', backgroundColor: '#fff', border: '1px solid #e5e7eb' }}>
+                            <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`}>
+                                <div className="messages-list">
+                                    {messagesState.map((m) => (
+                                        <div
+                                            key={m.id}
+                                            className={`message-item ${m.unreadStatus?.staff ? 'unread' : ''} ${activeDoubtId === m.id ? 'active' : ''}`}
+                                            onClick={() => openDoubt(m.id)}
+                                        >
+                                            <div className={`message-avatar ${m.color}`}>{m.initials}</div>
+                                            <div className="message-body">
+                                                <div className="message-top">
+                                                    <span className="message-sender">{m.sender}</span>
+                                                    <span className="message-time">{m.time}</span>
+                                                </div>
+                                                <span className="message-subject">{m.subject}</span>
+                                                <p className="message-preview">{m.preview}</p>
+                                            </div>
+                                            {m.unreadStatus?.staff && <div className="unread-badge" />}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ backgroundColor: '#f9fafb' }}>
+                                {!activeDoubt ? (
+                                    <div className="chat-empty">
+                                        <div className="chat-empty-icon" style={{ fontSize: 40, opacity: 0.2 }}>💬</div>
+                                        <h2 style={{ color: '#9ca3af' }}>Select a conversation</h2>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="chat-header">
+                                            <button className="back-btn" onClick={() => setActiveDoubtId(null)}><IoArrowBack /></button>
+                                            <div className="chat-header-info">
+                                                <span className="chat-name">{activeDoubt.sender}</span>
+                                                <span className="chat-status" style={{ color: '#6b7280' }}>Replying as {activeDoubt.subject} Mentor</span>
+                                            </div>
+                                        </div>
+                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column' }}>
+                                            {activeDoubt.messages.map((msg, i) => (
+                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
+                                                    <div className="chat-bubble">
+                                                        <p>{msg.text}</p>
+                                                        <span className="bubble-time">{msg.time}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="chat-input-bar">
+                                            <textarea
+                                                className="chat-input"
+                                                placeholder={`Reply to ${activeDoubt.sender}...`}
+                                                value={replyText}
+                                                onChange={(e) => setReplyText(e.target.value)}
+                                                onKeyDown={handleReplyKeyDown}
+                                                rows={1}
+                                            />
+                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()}><FaComments /></button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
