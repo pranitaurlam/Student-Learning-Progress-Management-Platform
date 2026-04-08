@@ -693,7 +693,7 @@ export default function Staff() {
                             <h2>Messages</h2>
                             <p>Read and reply to messages sent by students.</p>
                         </div>
-                        <div className="messages-layout" style={{ display: 'flex', flexDirection: 'row', minHeight: 0, height: 600, borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
+                        <div className="messages-layout" style={{ display: 'flex', flexDirection: 'row', flex: 1, minHeight: 'calc(100vh - 240px)', width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
                             <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`} style={{ minHeight: 0 }}>
                                 <div className="messages-list">
                                     {messagesState.map((m) => (
@@ -716,7 +716,7 @@ export default function Staff() {
                                     ))}
                                 </div>
                             </div>
-                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ minHeight: 0 }}>
+                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
                                 {!activeDoubt ? (
                                     <div className="chat-empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                         <div className="chat-empty-icon" style={{ fontSize: 40, opacity: 0.2 }}>💬</div>
@@ -731,7 +731,7 @@ export default function Staff() {
                                                 <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>Replying as {activeDoubt.subject} Mentor</span>
                                             </div>
                                         </div>
-                                        <div className="chat-messages" style={{ minHeight: 0 }}>
+                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
                                             {activeDoubt.messages.map((msg, i) => (
                                                 <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
                                                     <div className="chat-bubble">
@@ -741,7 +741,7 @@ export default function Staff() {
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="chat-input-bar">
+                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginTop: 'auto' }}>
                                             <textarea
                                                 className="chat-input"
                                                 placeholder={`Reply to ${activeDoubt.sender}...`}
