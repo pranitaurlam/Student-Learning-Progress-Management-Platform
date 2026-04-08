@@ -41,10 +41,10 @@ const initialConversations = [
         color: 'cyan',
         subject: 'DSA – Batch 3',
         time: 'Yesterday',
-        preview: 'New mock test series for JEE 2026 is now available! Check it out.',
+        preview: 'Please send the links for the DSA doubt questions.',
         unreadStatus: { student: false, staff: false },
         messages: [
-            { from: 'mentor', text: 'New mock test series for JEE 2026 is now available! Check it out.', time: 'Yesterday' },
+            { from: 'mentor', text: 'Please send the links for the DSA doubt questions.', time: 'Yesterday' },
         ],
     },
     {
