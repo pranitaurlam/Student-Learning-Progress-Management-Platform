@@ -55,6 +55,13 @@ export default function Staff() {
     const [messagesState, setMessagesState] = useState([]);
     const [activeDoubtId, setActiveDoubtId] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messagesState, activeDoubtId]);
 
     useEffect(() => {
         if (activeTab === 'messages') {
@@ -693,8 +700,8 @@ export default function Staff() {
                             <h2>Messages</h2>
                             <p>Read and reply to messages sent by students.</p>
                         </div>
-                        <div className="messages-layout" style={{ display: 'flex', flexDirection: 'row', flex: 1, minHeight: 'calc(100vh - 240px)', width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
-                            <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`} style={{ minHeight: 0 }}>
+                        <div className="messages-layout" style={{ display: 'flex', height: 'calc(100vh - 160px)', minHeight: 650, width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', transition: 'all 0.3s ease' }}>
+                            <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`} style={{ width: '30%', minWidth: 280, borderRight: '1px solid rgba(0,0,0,0.05)' }}>
                                 <div className="messages-list">
                                     {messagesState.map((m) => (
                                         <div
@@ -716,9 +723,9 @@ export default function Staff() {
                                     ))}
                                 </div>
                             </div>
-                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', position: 'relative' }}>
                                 {!activeDoubt ? (
-                                    <div className="chat-empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div className="chat-empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.7 }}>
                                         <div className="chat-empty-icon" style={{ fontSize: 40, opacity: 0.2 }}>💬</div>
                                         <h2 style={{ color: '#9ca3af' }}>Select a conversation</h2>
                                     </div>
@@ -731,27 +738,29 @@ export default function Staff() {
                                                 <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>Replying as {activeDoubt.subject} Mentor</span>
                                             </div>
                                         </div>
-                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', padding: '24px', gap: 16 }}>
                                             {activeDoubt.messages.map((msg, i) => (
-                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
-                                                    <div className="chat-bubble">
-                                                        <p>{msg.text}</p>
-                                                        <span className="bubble-time">{msg.time}</span>
+                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`} style={{ alignSelf: msg.from === 'mentor' ? 'flex-end' : 'flex-start', maxWidth: '75%', width: 'auto' }}>
+                                                    <div className="chat-bubble" style={{ padding: '12px 16px', borderRadius: 18, wordBreak: 'normal', whiteSpace: 'pre-wrap', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}>
+                                                        <p style={{ margin: 0, fontSize: 15 }}>{msg.text}</p>
+                                                        <span className="bubble-time" style={{ fontSize: 11, display: 'block', textAlign: 'right', marginTop: 6, opacity: 0.7 }}>{msg.time}</span>
                                                     </div>
                                                 </div>
                                             ))}
+                                            <div ref={messagesEndRef} />
                                         </div>
-                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginTop: 'auto' }}>
+                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '16px 24px', backgroundColor: 'rgba(15, 10, 30, 0.95)', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, boxShadow: '0 -5px 20px rgba(0,0,0,0.2)' }}>
                                             <textarea
                                                 className="chat-input"
-                                                placeholder={`Reply to ${activeDoubt.sender}...`}
+                                                placeholder={`Type your reply to ${activeDoubt.sender}...`}
                                                 value={replyText}
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 onKeyDown={handleReplyKeyDown}
                                                 rows={1}
+                                                style={{ flex: 1, resize: 'none', padding: '12px 20px', borderRadius: 24, border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'var(--dark-card)', color: '#fff', outline: 'none', fontSize: 15, transition: 'border-color 0.3s ease', minHeight: 48, maxHeight: 120, overflowY: 'auto' }}
                                             />
-                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()}>
-                                                <IoSend />
+                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ background: '#ec4899', color: '#fff', border: 'none', padding: '0 24px', height: 48, borderRadius: 24, fontWeight: 'bold', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s ease', opacity: replyText.trim() ? 1 : 0.5, transform: replyText.trim() ? 'scale(1)' : 'scale(0.98)', boxShadow: replyText.trim() ? '0 4px 15px rgba(236,72,153,0.4)' : 'none' }}>
+                                                Send Reply
                                             </button>
                                         </div>
                                     </>
