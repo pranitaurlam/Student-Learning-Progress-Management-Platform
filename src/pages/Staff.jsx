@@ -3,9 +3,9 @@ import {
     FaUserShield, FaCalendarAlt, FaBullhorn, FaBookOpen,
     FaPlus, FaTrash, FaEdit, FaCheck, FaTimes,
     FaUsers, FaChartBar, FaClock, FaTrophy, FaStar,
-    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments
+    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane
 } from 'react-icons/fa';
-import { IoArrowBack } from 'react-icons/io5';
+import { IoArrowBack, IoSend } from 'react-icons/io5';
 import './Staff.css';
 
 const SUBJECTS = ['AI/ML', 'DSA', 'Web Dev', 'DBMS', 'Python'];
@@ -700,7 +700,7 @@ export default function Staff() {
                             <h2>Messages</h2>
                             <p>Read and reply to messages sent by students.</p>
                         </div>
-                        <div className="messages-layout" style={{ display: 'flex', height: 'calc(100vh - 160px)', minHeight: 650, width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', transition: 'all 0.3s ease' }}>
+                        <div className="messages-layout staff-messages-theme" style={{ display: 'flex', height: 'calc(100vh - 160px)', minHeight: 650, width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', transition: 'all 0.3s ease' }}>
                             <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`} style={{ width: '30%', minWidth: 280, borderRight: '1px solid rgba(0,0,0,0.05)' }}>
                                 <div className="messages-list">
                                     {messagesState.map((m) => (
@@ -749,7 +749,7 @@ export default function Staff() {
                                             ))}
                                             <div ref={messagesEndRef} />
                                         </div>
-                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '16px 24px', backgroundColor: 'rgba(15, 10, 30, 0.95)', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, boxShadow: '0 -5px 20px rgba(0,0,0,0.2)' }}>
+                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '16px 24px', flexShrink: 0 }}>
                                             <textarea
                                                 className="chat-input"
                                                 placeholder={`Type your reply to ${activeDoubt.sender}...`}
@@ -757,10 +757,10 @@ export default function Staff() {
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 onKeyDown={handleReplyKeyDown}
                                                 rows={1}
-                                                style={{ flex: 1, resize: 'none', padding: '12px 20px', borderRadius: 24, border: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'var(--dark-card)', color: '#fff', outline: 'none', fontSize: 15, transition: 'border-color 0.3s ease', minHeight: 48, maxHeight: 120, overflowY: 'auto' }}
+                                                style={{ flex: 1, resize: 'none', padding: '12px 20px', borderRadius: 24, border: '1px solid #d1d5db', outline: 'none', fontSize: 15, transition: 'border-color 0.3s ease', minHeight: 48, maxHeight: 120, overflowY: 'auto' }}
                                             />
-                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ background: '#ec4899', color: '#fff', border: 'none', padding: '0 24px', height: 48, borderRadius: 24, fontWeight: 'bold', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s ease', opacity: replyText.trim() ? 1 : 0.5, transform: replyText.trim() ? 'scale(1)' : 'scale(0.98)', boxShadow: replyText.trim() ? '0 4px 15px rgba(236,72,153,0.4)' : 'none' }}>
-                                                Send Reply
+                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ background: '#ec4899', color: '#fff', border: 'none', width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s ease', opacity: replyText.trim() ? 1 : 0.5, transform: replyText.trim() ? 'scale(1)' : 'scale(0.98)', boxShadow: replyText.trim() ? '0 4px 15px rgba(236,72,153,0.4)' : 'none', flexShrink: 0 }}>
+                                                <IoSend size={18} style={{ marginLeft: 3 }} />
                                             </button>
                                         </div>
                                     </>
