@@ -70,6 +70,20 @@ export default function MockTestRunner() {
   const [submitted, setSubmitted] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [studentName, setStudentName] = useState(localStorage.getItem('mindforge_student_name') || '');
+
+  // Ensure student name exists
+  useEffect(() => {
+    if (!studentName) {
+      const name = prompt("Please enter your name to start the test:");
+      if (name) {
+        setStudentName(name);
+        localStorage.setItem('mindforge_student_name', name);
+      } else {
+        setStudentName('Student'); // Fallback
+      }
+    }
+  }, [studentName]);
 
   // Timer
   useEffect(() => {
@@ -110,6 +124,7 @@ export default function MockTestRunner() {
 
     const record = {
       date: new Date().toISOString(),
+      studentName: studentName || 'Student',
       subject,
       subjectName,
       paperId: Number(paperId),

@@ -3,8 +3,9 @@ import {
     FaUserShield, FaCalendarAlt, FaBullhorn, FaBookOpen,
     FaPlus, FaTrash, FaEdit, FaCheck, FaTimes,
     FaUsers, FaChartBar, FaClock, FaTrophy, FaStar,
-    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync
+    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane, FaLock
 } from 'react-icons/fa';
+import { IoArrowBack, IoSend } from 'react-icons/io5';
 import './Staff.css';
 
 const SUBJECTS = ['AI/ML', 'DSA', 'Web Dev', 'DBMS', 'Python'];
@@ -32,6 +33,7 @@ const TABS = [
     { key: 'timetable', label: 'Timetable', icon: FaCalendarAlt, color: '#a78bfa' },
     { key: 'announcements', label: 'Announcements', icon: FaBullhorn, color: '#f472b6' },
     { key: 'assignments', label: 'Assignments', icon: FaBookOpen, color: '#34d399' },
+    { key: 'messages', label: 'Messages', icon: FaComments, color: '#ec4899' },
     { key: 'scores', label: 'Student Scores', icon: FaTrophy, color: '#fbbf24' },
     { key: 'materials', label: 'Study Material', icon: FaFolderOpen, color: '#60a5fa' },
     { key: 'attendance', label: 'Attendance', icon: FaQrcode, color: '#f87171' },
@@ -47,6 +49,100 @@ const SUBJECT_COLORS = {
 
 export default function Staff() {
     const [activeTab, setActiveTab] = useState('timetable');
+
+    /* ── Student Doubts (Messages) ── */
+    const STORAGE_KEY = 'mindforge_messages';
+    const [messagesState, setMessagesState] = useState([]);
+    const [activeDoubtId, setActiveDoubtId] = useState(null);
+    const [replyText, setReplyText] = useState('');
+    const [unlockedIds, setUnlockedIds] = useState([]);
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messagesState, activeDoubtId]);
+
+    useEffect(() => {
+        if (activeTab === 'messages') {
+            const load = () => {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        let data = JSON.parse(stored);
+                        let changed = false;
+                        data = data.map(conv => {
+                            if (conv.messages.some(m => m.text.includes("JEE 2026"))) {
+                                changed = true;
+                                return {
+                                    ...conv,
+                                    preview: "Please send the links for the DSA doubt questions.",
+                                    messages: conv.messages.map(m => m.text.includes("JEE 2026") ? { ...m, text: "Please send the links for the DSA doubt questions." } : m)
+                                };
+                            }
+                            return conv;
+                        });
+                        setMessagesState(data);
+                        if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    }
+                } catch (e) { }
+            };
+            load();
+            const interval = setInterval(load, 2000);
+            return () => clearInterval(interval);
+        }
+    }, [activeTab]);
+
+    const activeDoubt = messagesState.find((m) => m.id === activeDoubtId);
+
+    const openDoubt = (id) => {
+        const doubt = messagesState.find(m => m.id === id);
+        if (!doubt) return;
+
+        // Password check: Name + 123 (excluding "Prof. ")
+        if (!unlockedIds.includes(id)) {
+            const pass = prompt(`Enter password to unlock ${doubt.sender}'s chat:`);
+            const cleanName = doubt.sender.replace(/^Prof\.\s*/, '');
+            const expected = `${cleanName}123`;
+            if (pass !== expected) {
+                alert("Incorrect password!");
+                return;
+            }
+            setUnlockedIds([...unlockedIds, id]);
+        }
+
+        setActiveDoubtId(id);
+        setReplyText('');
+        // mark staff as read
+        const updated = messagesState.map(c => c.id === id ? { ...c, unreadStatus: { ...c.unreadStatus, staff: false } } : c);
+        setMessagesState(updated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    };
+
+    const sendReply = () => {
+        if (!replyText.trim() || !activeDoubtId) return;
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const updated = messagesState.map(c =>
+            c.id === activeDoubtId ? {
+                ...c,
+                preview: replyText.trim(),
+                time: 'Just now',
+                unreadStatus: { student: true, staff: false },
+                messages: [...c.messages, { from: 'mentor', text: replyText.trim(), time: timeStr }]
+            } : c
+        );
+        setMessagesState(updated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        setReplyText('');
+    };
+
+    const handleReplyKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendReply();
+        }
+    };
 
     /* ── Timetable ── */
     const [timetable, setTimetable] = useState(initTimetable);
@@ -477,17 +573,19 @@ export default function Staff() {
                         <div className="scores-section">
                             <div className="scores-section-title"><FaTrophy className="score-sec-icon gold" /> Mock Test Results</div>
                             <div className="assignments-table">
-                                <div className="table-head" style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1fr 80px' }}>
+                                <div className="table-head" style={{ gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr 1fr 80px' }}>
                                     <span>Date</span>
+                                    <span>Student</span>
                                     <span>Subject</span>
                                     <span>Difficulty</span>
                                     <span>Accuracy</span>
-                                    <span>Questions</span>
+                                    <span>Marks</span>
                                 </div>
                                 {mockHistory.length === 0 && <div className="empty-state">No mock test attempts recorded yet.</div>}
                                 {[...mockHistory].reverse().map((r, i) => (
-                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '1.5fr 1fr 1fr 1fr 80px' }}>
-                                        <span className="row-due">{new Date(r.date).toLocaleString()}</span>
+                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr 1fr 80px' }}>
+                                        <span className="row-due">{new Date(r.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                        <span className="row-title" style={{ fontWeight: 600 }}>{r.studentName || 'Student'}</span>
                                         <span><span className="subj-pill" style={{ '--c': SUBJECT_COLORS[r.subjectName] || '#a78bfa' }}>{r.subjectName || r.subject}</span></span>
                                         <span className="row-due" style={{ textTransform: 'capitalize' }}>{r.difficulty}</span>
                                         <span>
@@ -495,7 +593,7 @@ export default function Staff() {
                                                 {r.accuracy}%
                                             </span>
                                         </span>
-                                        <span className="row-due">{r.attempted}</span>
+                                        <span className="row-due" style={{ fontWeight: 600 }}>{r.mcqCorrect}/{r.mcqTotal}</span>
                                     </div>
                                 ))}
                             </div>
@@ -505,7 +603,8 @@ export default function Staff() {
                         <div className="scores-section">
                             <div className="scores-section-title"><FaStar className="score-sec-icon blue" /> Practice Question Attempts</div>
                             <div className="assignments-table">
-                                <div className="table-head" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
+                                <div className="table-head" style={{ gridTemplateColumns: '1.2fr 1.8fr 1fr 1fr 1fr' }}>
+                                    <span>Student</span>
                                     <span>Question</span>
                                     <span>Subject</span>
                                     <span>Difficulty</span>
@@ -513,8 +612,9 @@ export default function Staff() {
                                 </div>
                                 {practiceHistory.length === 0 && <div className="empty-state">No practice attempts recorded yet.</div>}
                                 {[...practiceHistory].reverse().map((r, i) => (
-                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
-                                        <span className="row-title" style={{ fontSize: '0.88rem' }}>{r.questionText?.slice(0, 60)}{r.questionText?.length > 60 ? '…' : ''}</span>
+                                    <div key={i} className="table-row" style={{ gridTemplateColumns: '1.2fr 1.8fr 1fr 1fr 1fr' }}>
+                                        <span className="row-title" style={{ fontWeight: 600 }}>{r.studentName || 'Student'}</span>
+                                        <span className="row-title" style={{ fontSize: '0.88rem' }}>{r.questionText?.slice(0, 50)}{r.questionText?.length > 50 ? '…' : ''}</span>
                                         <span><span className="subj-pill" style={{ '--c': SUBJECT_COLORS[r.subject] || '#a78bfa' }}>{r.subject}</span></span>
                                         <span className="row-due" style={{ textTransform: 'capitalize' }}>{r.difficulty}</span>
                                         <span>
@@ -625,6 +725,86 @@ export default function Staff() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ────── MESSAGES ────── */}
+                {activeTab === 'messages' && (
+                    <div className="tab-panel">
+                        <div className="panel-intro">
+                            <h2>Messages</h2>
+                            <p>Read and reply to messages sent by students.</p>
+                        </div>
+                        <div className="messages-layout staff-messages-theme" style={{ display: 'flex', height: 'calc(100vh - 160px)', minHeight: 650, width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', transition: 'all 0.3s ease' }}>
+                            <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`} style={{ width: '30%', minWidth: 280, borderRight: '1px solid rgba(0,0,0,0.05)' }}>
+                                <div className="messages-list">
+                                    {messagesState.map((m) => (
+                                        <div
+                                            key={m.id}
+                                            className={`message-item ${m.unreadStatus?.staff ? 'unread' : ''} ${activeDoubtId === m.id ? 'active' : ''}`}
+                                            onClick={() => openDoubt(m.id)}
+                                        >
+                                            <div className={`message-avatar ${m.color}`}>{m.initials}</div>
+                                            <div className="message-info">
+                                                <div className="message-header">
+                                                    <span className="message-sender">{m.sender}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        <span className="message-time">{m.time}</span>
+                                                        {!unlockedIds.includes(m.id) && <FaLock size={12} style={{ color: '#9ca3af' }} />}
+                                                    </div>
+                                                </div>
+                                                <span className="message-subject">{m.subject}</span>
+                                                <p className="message-preview">{m.preview}</p>
+                                            </div>
+                                            {m.unreadStatus?.staff && <div className="unread-badge" />}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', position: 'relative' }}>
+                                {!activeDoubt ? (
+                                    <div className="chat-empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.7 }}>
+                                        <div className="chat-empty-icon" style={{ fontSize: 40, opacity: 0.2 }}>💬</div>
+                                        <h2 style={{ color: '#9ca3af' }}>Select a conversation</h2>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="chat-header">
+                                            <button className="back-btn" onClick={() => setActiveDoubtId(null)}><IoArrowBack /></button>
+                                            <div className="chat-header-info">
+                                                <span className="chat-name">{activeDoubt.sender}</span>
+                                                <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>Replying as {activeDoubt.subject} Mentor</span>
+                                            </div>
+                                        </div>
+                                        <div className="chat-messages">
+                                            {activeDoubt.messages.map((msg, i) => (
+                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
+                                                    <div className="chat-bubble">
+                                                        <p>{msg.text}</p>
+                                                        <span className="bubble-time">{msg.time}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <div ref={messagesEndRef} />
+                                        </div>
+                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '16px 24px', flexShrink: 0 }}>
+                                            <textarea
+                                                className="chat-input"
+                                                placeholder={`Type your reply to ${activeDoubt.sender}...`}
+                                                value={replyText}
+                                                onChange={(e) => setReplyText(e.target.value)}
+                                                onKeyDown={handleReplyKeyDown}
+                                                rows={1}
+                                                style={{ flex: 1, resize: 'none', padding: '12px 20px', borderRadius: 24, border: '1px solid #d1d5db', outline: 'none', fontSize: 15, transition: 'border-color 0.3s ease', minHeight: 48, maxHeight: 120, overflowY: 'auto' }}
+                                            />
+                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ background: '#ec4899', color: '#fff', border: 'none', width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s ease', opacity: replyText.trim() ? 1 : 0.5, transform: replyText.trim() ? 'scale(1)' : 'scale(0.98)', boxShadow: replyText.trim() ? '0 4px 15px rgba(236,72,153,0.4)' : 'none', flexShrink: 0 }}>
+                                                <IoSend size={18} style={{ marginLeft: 3 }} />
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

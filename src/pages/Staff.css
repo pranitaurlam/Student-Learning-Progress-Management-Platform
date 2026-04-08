@@ -949,3 +949,83 @@
         justify-content: center;
     }
 }
+
+/* ── Staff Messages Light Theme Override ── */
+.staff-messages-theme .chat-window {
+    background: #ffffff !important;
+}
+
+.staff-messages-theme .messages-sidebar {
+    background: #f9fafb !important;
+}
+
+.staff-messages-theme .sidebar-header {
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.staff-messages-theme .sidebar-header h1 {
+    background: #ec4899 !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+}
+
+.staff-messages-theme .message-item {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+.staff-messages-theme .message-item:hover {
+    background: #fdf2f8 !important;
+}
+
+.staff-messages-theme .message-item.active {
+    background: #fbcfe8 !important;
+    border-color: #ec4899 !important;
+}
+
+.staff-messages-theme .message-sender {
+    color: #111827 !important;
+}
+
+.staff-messages-theme .message-preview {
+    color: #6b7280 !important;
+}
+
+.staff-messages-theme .chat-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.staff-messages-theme .chat-name {
+    color: #111827 !important;
+}
+
+.staff-messages-theme .chat-bubble-wrap.them .chat-bubble {
+    background: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+}
+
+.staff-messages-theme .chat-bubble-wrap.them .chat-bubble p {
+    color: #1f2937 !important;
+}
+
+.staff-messages-theme .chat-bubble-wrap.them .bubble-time {
+    color: #9ca3af !important;
+}
+
+.staff-messages-theme .chat-input-bar {
+    background: #ffffff !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+.staff-messages-theme .chat-input {
+    background: #f9fafb !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.staff-messages-theme .chat-input:focus {
+    border-color: #ec4899 !important;
+    background: #ffffff !important;
+}
