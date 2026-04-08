@@ -738,12 +738,12 @@ export default function Staff() {
                                                 <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>Replying as {activeDoubt.subject} Mentor</span>
                                             </div>
                                         </div>
-                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', padding: '24px', gap: 16 }}>
+                                        <div className="chat-messages">
                                             {activeDoubt.messages.map((msg, i) => (
-                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`} style={{ alignSelf: msg.from === 'mentor' ? 'flex-end' : 'flex-start', maxWidth: '75%', width: 'auto' }}>
-                                                    <div className="chat-bubble" style={{ padding: '12px 16px', borderRadius: 18, wordBreak: 'normal', whiteSpace: 'pre-wrap', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}>
-                                                        <p style={{ margin: 0, fontSize: 15 }}>{msg.text}</p>
-                                                        <span className="bubble-time" style={{ fontSize: 11, display: 'block', textAlign: 'right', marginTop: 6, opacity: 0.7 }}>{msg.time}</span>
+                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
+                                                    <div className="chat-bubble">
+                                                        <p>{msg.text}</p>
+                                                        <span className="bubble-time">{msg.time}</span>
                                                     </div>
                                                 </div>
                                             ))}
