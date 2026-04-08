@@ -68,7 +68,23 @@ export default function Staff() {
             const load = () => {
                 try {
                     const stored = localStorage.getItem(STORAGE_KEY);
-                    if (stored) setMessagesState(JSON.parse(stored));
+                    if (stored) {
+                        let data = JSON.parse(stored);
+                        let changed = false;
+                        data = data.map(conv => {
+                            if (conv.messages.some(m => m.text.includes("JEE 2026"))) {
+                                changed = true;
+                                return {
+                                    ...conv,
+                                    preview: "Please send the links for the DSA doubt questions.",
+                                    messages: conv.messages.map(m => m.text.includes("JEE 2026") ? { ...m, text: "Please send the links for the DSA doubt questions." } : m)
+                                };
+                            }
+                            return conv;
+                        });
+                        setMessagesState(data);
+                        if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    }
                 } catch (e) { }
             };
             load();

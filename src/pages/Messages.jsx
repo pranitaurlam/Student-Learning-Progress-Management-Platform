@@ -126,7 +126,29 @@ const STORAGE_KEY = 'mindforge_messages';
 const loadConversations = () => {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) return JSON.parse(stored);
+        if (stored) {
+            let data = JSON.parse(stored);
+            // MIGRATION: Replace old placeholder text if it exists in storage
+            let changed = false;
+            data = data.map(conv => {
+                const hasOldText = conv.messages.some(m => m.text.includes("JEE 2026"));
+                if (hasOldText) {
+                    changed = true;
+                    return {
+                        ...conv,
+                        preview: "Please send the links for the DSA doubt questions.",
+                        messages: conv.messages.map(m =>
+                            m.text.includes("JEE 2026")
+                                ? { ...m, text: "Please send the links for the DSA doubt questions." }
+                                : m
+                        )
+                    };
+                }
+                return conv;
+            });
+            if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            return data;
+        }
     } catch (e) {
         console.error("Failed to load messages", e);
     }
