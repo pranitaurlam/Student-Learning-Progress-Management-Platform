@@ -693,7 +693,7 @@ export default function Staff() {
                             <h2>Messages</h2>
                             <p>Read and reply to messages sent by students.</p>
                         </div>
-                        <div className="messages-layout" style={{ display: 'flex', height: 500, borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', backgroundColor: '#fff', border: '1px solid #e5e7eb' }}>
+                        <div className="messages-layout" style={{ display: 'flex', height: 500, borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
                             <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`}>
                                 <div className="messages-list">
                                     {messagesState.map((m) => (
@@ -716,7 +716,7 @@ export default function Staff() {
                                     ))}
                                 </div>
                             </div>
-                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#f9fafb' }}>
+                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
                                 {!activeDoubt ? (
                                     <div className="chat-empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                         <div className="chat-empty-icon" style={{ fontSize: 40, opacity: 0.2 }}>💬</div>
@@ -733,10 +733,10 @@ export default function Staff() {
                                         </div>
                                         <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', padding: '20px', gap: 14 }}>
                                             {activeDoubt.messages.map((msg, i) => (
-                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`} style={{ alignSelf: msg.from === 'mentor' ? 'flex-end' : 'flex-start', maxWidth: '75%', width: 'fit-content' }}>
-                                                    <div className="chat-bubble" style={{ padding: '10px 14px', borderRadius: 16, backgroundColor: msg.from === 'mentor' ? '#ec4899' : '#e5e7eb', color: msg.from === 'mentor' ? '#fff' : '#1f2937', wordBreak: 'normal', whiteSpace: 'pre-wrap' }}>
-                                                        <p style={{ margin: 0, fontSize: 14 }}>{msg.text}</p>
-                                                        <span className="bubble-time" style={{ fontSize: 10, display: 'block', textAlign: 'right', marginTop: 4, opacity: 0.7 }}>{msg.time}</span>
+                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
+                                                    <div className="chat-bubble">
+                                                        <p>{msg.text}</p>
+                                                        <span className="bubble-time">{msg.time}</span>
                                                     </div>
                                                 </div>
                                             ))}
