@@ -1,10 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import './AIDoubtChat.css';
 
+// NOTE (important): Calling Gemini directly from client-side code requires
+// embedding your API key in the built app, which is insecure. Prefer a
+// server-side proxy. If you still want to run client-only, set
+// VITE_GEMINI_API_KEY in your environment (vite will inject it at build time).
+
 const initialMessages = [
     {
+        id: 'm0',
         sender: 'bot',
-        text: "👋 Hi! I'm your AI Doubt Chat assistant. Ask me anything about your studies — from solving equations to explaining complex theories. I'm here to help you learn step by step!",
+        text:
+            "👋 Hi! I'm your AI Doubt Chat assistant. Ask me anything about your studies — from solving equations to explaining complex theories. I'm here to help you learn step by step!",
     },
 ];
 
@@ -22,122 +29,78 @@ export default function AIDoubtChat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Auto scroll to latest message
     const messagesEndRef = useRef(null);
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         const text = input.trim();
         if (!text) return;
 
-        // Add user message to chat
-        setMessages((prev) => [...prev, { sender: 'user', text }]);
-        setInput('');
+        const userMsg = { id: `u-${Date.now()}`, sender: 'user', text };
+        const botPending = { id: `b-${Date.now()}`, sender: 'bot', text: 'Thinking...', pending: true };
 
-        // Show "Thinking..." placeholder
-        setMessages((prev) => [...prev, { sender: 'bot', text: 'Thinking...' }]);
+        setMessages((prev) => [...prev, userMsg, botPending]);
+        setInput('');
         setLoading(true);
         setError(null);
 
-        // Call FastAPI backend
-        fetchAIReply(text)
-            .then((reply) => {
-                // Replace "Thinking..." with actual reply
-                setMessages((prev) => {
-                    const msgs = [...prev];
-                    const idx = msgs.map((m) => m.text).lastIndexOf('Thinking...');
-                    if (idx !== -1 && msgs[idx].sender === 'bot') {
-                        msgs[idx] = { sender: 'bot', text: reply };
-                    } else {
-                        msgs.push({ sender: 'bot', text: reply });
-                    }
-                    return msgs;
-                });
-            })
-            .catch((err) => {
-                console.error('AI reply error:', err);
-                // Replace "Thinking..." with error message
-                setMessages((prev) => {
-                    const msgs = [...prev];
-                    const idx = msgs.map((m) => m.text).lastIndexOf('Thinking...');
-                    const errorText =
-                        err?.message || 'Failed to get response. Please try again!';
-                    if (idx !== -1 && msgs[idx].sender === 'bot') {
-                        msgs[idx] = { sender: 'bot', text: `❌ Error: ${errorText}` };
-                    } else {
-                        msgs.push({ sender: 'bot', text: `❌ Error: ${errorText}` });
-                    }
-                    return msgs;
-                });
-                setError(err?.message || String(err));
-            })
-            .finally(() => setLoading(false));
+        try {
+            const reply = await fetchGeminiReply(text);
+            setMessages((prev) => prev.map((m) => (m.id === botPending.id ? { ...m, text: reply, pending: false } : m)));
+        } catch (err) {
+            console.error('Gemini error:', err);
+            const errText = err?.message || 'Failed to get response';
+            setMessages((prev) => prev.map((m) => (m.id === botPending.id ? { ...m, text: `❌ Error: ${errText}`, pending: false } : m)));
+            setError(errText);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Send on Enter key
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !loading) handleSend();
     };
 
-    // Click suggested topic → fill input
-    const handleTopicClick = (topic) => {
-        setInput(topic);
-    };
+    const handleTopicClick = (topic) => setInput(topic);
 
     return (
         <div className="chat-page">
             <div className="chat-container">
 
-                {/* Header */}
                 <div className="chat-header">
                     <h1>AI Doubt Chat</h1>
                     <p>Get instant explanations and step-by-step help</p>
                 </div>
 
-                {/* Messages */}
                 <div className="chat-messages">
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`chat-bubble ${msg.sender}`}>
-                            <div className="chat-bubble-label">
-                                {msg.sender === 'bot' ? '🤖 AI Tutor' : '🧑‍🎓 You'}
-                            </div>
-                            {/* Newlines show properly */}
-                            {msg.text.split('\n').map((line, j) => (
-                                <span key={j}>
+                    {messages.map((msg) => (
+                        <div key={msg.id} className={`chat-bubble ${msg.sender} ${msg.pending ? 'pending' : ''}`}>
+                            <div className="chat-bubble-label">{msg.sender === 'bot' ? '🤖 AI Tutor' : '🧑‍🎓 You'}</div>
+                            {msg.text.split('\n').map((line, i) => (
+                                <span key={i}>
                                     {line}
                                     <br />
                                 </span>
                             ))}
                         </div>
                     ))}
-                    {/* Auto scroll ref */}
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Suggested Topics */}
                 <div className="suggested-topics">
                     {suggestedTopics.map((t, i) => (
-                        <button
-                            key={i}
-                            className="topic-chip"
-                            onClick={() => handleTopicClick(t)}
-                            disabled={loading}
-                        >
+                        <button key={i} className="topic-chip" onClick={() => handleTopicClick(t)} disabled={loading}>
                             {t}
                         </button>
                     ))}
                 </div>
 
-                {/* Error Message */}
                 {error && (
-                    <div className="chat-error" role="alert">
-                        ⚠️ {error}
-                    </div>
+                    <div className="chat-error" role="alert">⚠️ {error}</div>
                 )}
 
-                {/* Input Row */}
                 <div className="chat-input-row">
                     <input
                         type="text"
@@ -147,11 +110,7 @@ export default function AIDoubtChat() {
                         onKeyDown={handleKeyDown}
                         disabled={loading}
                     />
-                    <button
-                        className="chat-send-btn"
-                        onClick={handleSend}
-                        disabled={loading || !input.trim()}
-                    >
+                    <button className="chat-send-btn" onClick={handleSend} disabled={loading || !input.trim()}>
                         {loading ? 'Thinking...' : 'Send →'}
                     </button>
                 </div>
@@ -161,19 +120,129 @@ export default function AIDoubtChat() {
     );
 }
 
-// FastAPI backend se reply fetch karna
-async function fetchAIReply(userText) {
-    const res = await fetch('/api/ai-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText }),  // backend expects "message"
-    });
+// WARNING: putting your Gemini API key directly in source is insecure. Anyone with access
+// to your frontend bundle can extract and use it. Only do this for local testing or demos.
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; // <-- Put your API key here
+const GEMINI_MODEL = 'gemini-flash-latest'; // example model from Google sample
 
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error || 'Server returned an error');
+/**
+ * Attempt to use the official @google/genai client (like your sample) via dynamic import.
+ * If the client cannot be loaded (likely in many browser builds), fall back to the
+ * plain REST Generative Language endpoint.
+ *
+ * Note: @google/genai is typically intended for Node/server environments. Dynamic import
+ * may still fail in the browser due to package dependencies. We keep a REST fallback
+ * so the component can still work in client-only environments.
+ */
+async function fetchGeminiReply(userText) {
+    const apiKey = GEMINI_API_KEY;
+    const model = GEMINI_MODEL;
+
+    if (!apiKey || apiKey === 'PASTE_YOUR_GEMINI_API_KEY_HERE') {
+        throw new Error('Gemini API key not provided in the JSX file. Paste your key into GEMINI_API_KEY.');
     }
 
-    const data = await res.json();
-    return data.reply;  // backend returns "reply"
+    // First try: dynamic import of the official client
+    try {
+        // dynamic import so bundlers don't always try to include the package
+        const mod = await import('@google/genai');
+        const { GoogleGenAI } = mod;
+        if (typeof GoogleGenAI === 'function' || typeof GoogleGenAI === 'object') {
+            // Some builds expect { apiKey } or other options — try common constructor shape
+            const ai = new GoogleGenAI({ apiKey });
+
+            // Sample call based on your snippet
+            const response = await ai.models.generateContent({
+                model,
+                contents: userText,
+            });
+
+            // Common return shapes: response.text or response.output or nested content
+            if (response?.text) return response.text;
+            if (response?.output && Array.isArray(response.output) && response.output[0]?.content) {
+                // flatten content
+                const out = response.output[0].content.map((c) => c.text || c).join('\n');
+                return out;
+            }
+
+            // Fallback: stringify
+            return JSON.stringify(response, null, 2);
+        }
+    } catch (clientErr) {
+        // Likely the package isn't installable/usable in the browser; we'll fall back to REST
+        console.warn('Could not use @google/genai client in browser, falling back to REST API:', clientErr?.message || clientErr);
+    }
+
+    // REST fallback (Generative Language API) - using the same shape as your curl example
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+    // Body shape matches your curl: { contents: [ { parts: [ { text } ] } ] }
+    const body = {
+        contents: [
+            {
+                parts: [
+                    {
+                        text: userText,
+                    },
+                ],
+            },
+        ],
+    };
+
+    try {
+        console.log('[AI] REST call to:', url);
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-goog-api-key': apiKey,
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+            const text = await res.text().catch(() => 'NO_BODY');
+            console.error('[AI] REST error status:', res.status, res.statusText, 'body:', text);
+            throw new Error(`REST API error: ${res.status} ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        console.log('[AI] REST response:', data);
+
+        // Typical generateContent response: .candidates[0].output[0].content or .candidates
+        // Try a few common locations
+        const candidateText =
+            data?.candidates?.[0]?.content?.map((c) => c.text || c).join('\n') ||
+            data?.candidates?.[0]?.output?.map((o) => (o.text || JSON.stringify(o))).join('\n') ||
+            data?.candidates?.[0]?.output?.[0]?.content?.map((c) => c.text || c).join('\n') ||
+            data?.candidates?.[0]?.content?.[0]?.text ||
+            data?.outputs?.[0]?.content?.[0]?.text;
+
+        if (candidateText) return candidateText;
+
+        // As a last resort, try to extract text from top-level fields
+        if (typeof data === 'string') return data;
+        return JSON.stringify(data, null, 2);
+    } catch (networkErr) {
+        console.error('[AI] Network/Fetch error:', networkErr);
+        console.error('navigator.onLine:', typeof navigator !== 'undefined' ? navigator.onLine : 'unknown');
+        console.error('If you see "TypeError: Failed to fetch" in the browser, it commonly means a CORS or network issue.');
+
+        // Local fallback to `/api/ai-chat` (your existing FastAPI canned replies)
+        try {
+            console.log('[AI] Attempting fallback to local /api/ai-chat endpoint...');
+            const fb = await fetch('/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: userText }) });
+            if (fb.ok) {
+                const fbData = await fb.json();
+                console.warn('[AI] Using local fallback /api/ai-chat (not Gemini):', fbData);
+                return fbData.reply || JSON.stringify(fbData);
+            }
+            const fbText = await fb.text().catch(() => 'NO_BODY');
+            console.warn('[AI] Local fallback returned non-ok status:', fb.status, fb.statusText, fbText);
+        } catch (fbErr) {
+            console.warn('[AI] Local fallback failed:', fbErr);
+        }
+
+        throw new Error(networkErr?.message || String(networkErr));
+    }
 }
