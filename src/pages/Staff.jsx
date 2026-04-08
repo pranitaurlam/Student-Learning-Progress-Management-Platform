@@ -751,8 +751,8 @@ export default function Staff() {
                                                 rows={1}
                                                 style={{ flex: 1, resize: 'none', padding: '10px 14px', borderRadius: 20, border: '1px solid #d1d5db', outline: 'none', fontSize: 14 }}
                                             />
-                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ border: 'none', background: '#ec4899', color: '#fff', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                                                <FaComments />
+                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ border: 'none', background: '#ec4899', color: '#fff', padding: '0 20px', height: 40, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, fontWeight: 'bold' }}>
+                                                Reply
                                             </button>
                                         </div>
                                     </>
