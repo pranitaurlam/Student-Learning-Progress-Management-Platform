@@ -3,7 +3,7 @@ import {
     FaUserShield, FaCalendarAlt, FaBullhorn, FaBookOpen,
     FaPlus, FaTrash, FaEdit, FaCheck, FaTimes,
     FaUsers, FaChartBar, FaClock, FaTrophy, FaStar,
-    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane
+    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane, FaLock
 } from 'react-icons/fa';
 import { IoArrowBack, IoSend } from 'react-icons/io5';
 import './Staff.css';
@@ -55,6 +55,7 @@ export default function Staff() {
     const [messagesState, setMessagesState] = useState([]);
     const [activeDoubtId, setActiveDoubtId] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const [unlockedIds, setUnlockedIds] = useState([]);
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
@@ -96,6 +97,20 @@ export default function Staff() {
     const activeDoubt = messagesState.find((m) => m.id === activeDoubtId);
 
     const openDoubt = (id) => {
+        const doubt = messagesState.find(m => m.id === id);
+        if (!doubt) return;
+
+        // Password check: Name + 123
+        if (!unlockedIds.includes(id)) {
+            const pass = prompt(`Enter password to unlock ${doubt.sender}'s chat:`);
+            const expected = `${doubt.sender}123`;
+            if (pass !== expected) {
+                alert("Incorrect password!");
+                return;
+            }
+            setUnlockedIds([...unlockedIds, id]);
+        }
+
         setActiveDoubtId(id);
         setReplyText('');
         // mark staff as read
@@ -726,10 +741,13 @@ export default function Staff() {
                                             onClick={() => openDoubt(m.id)}
                                         >
                                             <div className={`message-avatar ${m.color}`}>{m.initials}</div>
-                                            <div className="message-body">
-                                                <div className="message-top">
+                                            <div className="message-info">
+                                                <div className="message-header">
                                                     <span className="message-sender">{m.sender}</span>
-                                                    <span className="message-time">{m.time}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        <span className="message-time">{m.time}</span>
+                                                        {!unlockedIds.includes(m.id) && <FaLock size={12} style={{ color: '#9ca3af' }} />}
+                                                    </div>
                                                 </div>
                                                 <span className="message-subject">{m.subject}</span>
                                                 <p className="message-preview">{m.preview}</p>
