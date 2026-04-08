@@ -724,14 +724,14 @@ export default function Staff() {
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="chat-header" style={{ padding: '14px 20px', borderBottom: '1px solid #e5e7eb', backgroundColor: '#fff', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
-                                            <button className="back-btn" onClick={() => setActiveDoubtId(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20 }}><IoArrowBack /></button>
+                                        <div className="chat-header">
+                                            <button className="back-btn" onClick={() => setActiveDoubtId(null)}><IoArrowBack /></button>
                                             <div className="chat-header-info">
-                                                <span className="chat-name" style={{ fontWeight: 600 }}>{activeDoubt.sender}</span>
-                                                <span className="chat-status" style={{ color: '#6b7280', fontSize: 12, display: 'block' }}>Replying as {activeDoubt.subject} Mentor</span>
+                                                <span className="chat-name">{activeDoubt.sender}</span>
+                                                <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>Replying as {activeDoubt.subject} Mentor</span>
                                             </div>
                                         </div>
-                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', padding: '20px', gap: 14 }}>
+                                        <div className="chat-messages">
                                             {activeDoubt.messages.map((msg, i) => (
                                                 <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
                                                     <div className="chat-bubble">
@@ -741,7 +741,7 @@ export default function Staff() {
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', backgroundColor: '#fff', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
+                                        <div className="chat-input-bar">
                                             <textarea
                                                 className="chat-input"
                                                 placeholder={`Reply to ${activeDoubt.sender}...`}
@@ -749,9 +749,8 @@ export default function Staff() {
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 onKeyDown={handleReplyKeyDown}
                                                 rows={1}
-                                                style={{ flex: 1, resize: 'none', padding: '10px 14px', borderRadius: 20, border: '1px solid #d1d5db', outline: 'none', fontSize: 14 }}
                                             />
-                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ border: 'none', background: '#ec4899', color: '#fff', padding: '0 20px', height: 40, borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, fontWeight: 'bold' }}>
+                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()}>
                                                 Reply
                                             </button>
                                         </div>
