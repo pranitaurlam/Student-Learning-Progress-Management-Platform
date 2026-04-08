@@ -716,32 +716,32 @@ export default function Staff() {
                                     ))}
                                 </div>
                             </div>
-                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ backgroundColor: '#f9fafb' }}>
+                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', backgroundColor: '#f9fafb' }}>
                                 {!activeDoubt ? (
-                                    <div className="chat-empty">
+                                    <div className="chat-empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                         <div className="chat-empty-icon" style={{ fontSize: 40, opacity: 0.2 }}>💬</div>
                                         <h2 style={{ color: '#9ca3af' }}>Select a conversation</h2>
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="chat-header">
-                                            <button className="back-btn" onClick={() => setActiveDoubtId(null)}><IoArrowBack /></button>
+                                        <div className="chat-header" style={{ padding: '14px 20px', borderBottom: '1px solid #e5e7eb', backgroundColor: '#fff', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+                                            <button className="back-btn" onClick={() => setActiveDoubtId(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20 }}><IoArrowBack /></button>
                                             <div className="chat-header-info">
-                                                <span className="chat-name">{activeDoubt.sender}</span>
-                                                <span className="chat-status" style={{ color: '#6b7280' }}>Replying as {activeDoubt.subject} Mentor</span>
+                                                <span className="chat-name" style={{ fontWeight: 600 }}>{activeDoubt.sender}</span>
+                                                <span className="chat-status" style={{ color: '#6b7280', fontSize: 12, display: 'block' }}>Replying as {activeDoubt.subject} Mentor</span>
                                             </div>
                                         </div>
-                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', padding: '20px', gap: 14 }}>
                                             {activeDoubt.messages.map((msg, i) => (
-                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`}>
-                                                    <div className="chat-bubble">
-                                                        <p>{msg.text}</p>
-                                                        <span className="bubble-time">{msg.time}</span>
+                                                <div key={i} className={`chat-bubble-wrap ${msg.from === 'mentor' ? 'me' : 'them'}`} style={{ alignSelf: msg.from === 'mentor' ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+                                                    <div className="chat-bubble" style={{ padding: '10px 14px', borderRadius: 16, backgroundColor: msg.from === 'mentor' ? '#ec4899' : '#e5e7eb', color: msg.from === 'mentor' ? '#fff' : '#1f2937' }}>
+                                                        <p style={{ margin: 0, fontSize: 14 }}>{msg.text}</p>
+                                                        <span className="bubble-time" style={{ fontSize: 10, display: 'block', textAlign: 'right', marginTop: 4, opacity: 0.7 }}>{msg.time}</span>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="chat-input-bar">
+                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', backgroundColor: '#fff', borderTop: '1px solid #e5e7eb', flexShrink: 0 }}>
                                             <textarea
                                                 className="chat-input"
                                                 placeholder={`Reply to ${activeDoubt.sender}...`}
@@ -749,8 +749,11 @@ export default function Staff() {
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 onKeyDown={handleReplyKeyDown}
                                                 rows={1}
+                                                style={{ flex: 1, resize: 'none', padding: '10px 14px', borderRadius: 20, border: '1px solid #d1d5db', outline: 'none', fontSize: 14 }}
                                             />
-                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()}><FaComments /></button>
+                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ border: 'none', background: '#ec4899', color: '#fff', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                                                <FaComments />
+                                            </button>
                                         </div>
                                     </>
                                 )}
