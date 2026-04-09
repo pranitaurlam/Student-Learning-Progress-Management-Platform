@@ -11,6 +11,21 @@ export default function QuestionDetail() {
     const [submitted, setSubmitted] = useState(false);
     const [testResults, setTestResults] = useState(null);
     const [error, setError] = useState(null);
+    const [studentName, setStudentName] = useState(localStorage.getItem('mindforge_student_name') || '');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
+    // Ensure student name exists
+    useEffect(() => {
+        if (!studentName) {
+            const name = prompt("Please enter your name to track your practice score:");
+            if (name) {
+                setStudentName(name);
+                localStorage.setItem('mindforge_student_name', name);
+            } else {
+                setStudentName('Student');
+            }
+        }
+    }, [studentName]);
 
     const subject = subjectsData.find(s => s.id === subjectId);
     const question = subject?.questions.find(q => q.id === parseInt(questionId));
@@ -30,6 +45,42 @@ export default function QuestionDetail() {
     const handleSubmitMCQ = () => {
         if (selectedOption === null) return;
         setSubmitted(true);
+
+        // ── SAVE PRACTICE SCORE TO HISTORY ──
+        const isCorrect = selectedOption === question.correctOption;
+        try {
+            const prev = JSON.parse(localStorage.getItem('mindforge_practice_history') || '[]');
+            prev.push({
+                date: new Date().toISOString(),
+                studentName: studentName || 'Student',
+                subject: subject.name,
+                questionId: `${subjectId}-${questionId}`,
+                questionText: question.statement,
+                correct: isCorrect,
+                difficulty: question.difficulty,
+            });
+            localStorage.setItem('mindforge_practice_history', JSON.stringify(prev));
+        } catch { /* ignore */ }
+
+        // ── LOG MISTAKE IF INCORRECT ──
+        if (selectedOption !== question.correctOption) {
+            const mistake = {
+                userId: 'student_1',
+                questionId: `${subjectId}-${questionId}`,
+                questionText: question.statement,
+                selectedAnswer: question.options[selectedOption],
+                correctAnswer: question.options[question.correctOption],
+                explanation: question.explanation,
+                topic: subject.name,
+                difficulty: question.difficulty.toLowerCase()
+            };
+
+            fetch(`${API_URL}/mistakes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(mistake)
+            }).catch(err => console.error('Failed to log mistake:', err));
+        }
     };
 
     const handleRunCode = () => {
@@ -68,6 +119,27 @@ export default function QuestionDetail() {
             const executionOutput = executor();
             setTestResults(executionOutput.results);
             setSubmitted(true);
+
+            // ── LOG MISTAKE IF ANY TEST CASE FAILED ──
+            const failed = executionOutput.results.some(r => !r.passed);
+            if (failed) {
+                const mistake = {
+                    userId: 'student_1',
+                    questionId: `${subjectId}-${questionId}`,
+                    questionText: question.statement,
+                    selectedAnswer: "Code Submission (Failed Test Cases)",
+                    correctAnswer: "See Solution / Pass All Test Cases",
+                    explanation: "Code failed some test cases. Review logic and try again.",
+                    topic: subject.name,
+                    difficulty: question.difficulty.toLowerCase()
+                };
+
+                fetch(`${API_URL}/mistakes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mistake)
+                }).catch(err => console.error('Failed to log mistake:', err));
+            }
         } catch (e) {
             setError(e.message);
         }
