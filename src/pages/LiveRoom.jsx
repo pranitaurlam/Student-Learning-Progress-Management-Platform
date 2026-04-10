@@ -11,6 +11,7 @@ export default function LiveRoom() {
     const navigate = useNavigate();
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [isMicOn, setIsMicOn] = useState(true);
+    const [audioLevel, setAudioLevel] = useState(0);
     const [sessionData, setSessionData] = useState(null);
     const [participants, setParticipants] = useState([
         { name: "Academy Mentor (You)", role: "Instructor", isMe: true },
@@ -35,6 +36,23 @@ export default function LiveRoom() {
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
                 }
+
+                // Audio Metering logic
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                const updateMeter = () => {
+                    if (!streamRef.current) return;
+                    analyser.getByteFrequencyData(dataArray);
+                    const avg = dataArray.reduce((p, c) => p + c, 0) / dataArray.length;
+                    setAudioLevel(avg);
+                    requestAnimationFrame(updateMeter);
+                };
+                updateMeter();
             } catch (err) {
                 console.error("Hardware access denied:", err);
                 setIsCameraOn(false);
@@ -135,13 +153,20 @@ export default function LiveRoom() {
                     </div>
 
                     <div className="central-controls">
-                        <button
-                            className={`control-btn ${!isMicOn ? 'off' : ''}`}
-                            onClick={() => setIsMicOn(!isMicOn)}
-                            title={isMicOn ? "Mute" : "Unmute"}
-                        >
-                            {isMicOn ? <FaMicrophone /> : <FaMicrophoneSlash />}
-                        </button>
+                        <div className="mic-control-wrapper">
+                            <button
+                                className={`control-btn ${!isMicOn ? 'off' : ''}`}
+                                onClick={() => setIsMicOn(!isMicOn)}
+                                title={isMicOn ? "Mute" : "Unmute"}
+                            >
+                                {isMicOn ? <FaMicrophone /> : <FaMicrophoneSlash />}
+                            </button>
+                            {isMicOn && (
+                                <div className="audio-meter">
+                                    <div className="audio-bar" style={{ height: `${Math.min(100, audioLevel * 1.5)}%` }}></div>
+                                </div>
+                            )}
+                        </div>
 
                         <button
                             className={`control-btn ${!isCameraOn ? 'off' : ''}`}

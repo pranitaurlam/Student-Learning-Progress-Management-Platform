@@ -239,6 +239,33 @@
     align-items: center;
 }
 
+.mic-control-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.audio-meter {
+    position: absolute;
+    right: -10px;
+    bottom: 5px;
+    width: 6px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+}
+
+.audio-bar {
+    width: 100%;
+    background: #10b981;
+    transition: height 0.1s ease;
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
 .control-btn {
     width: 48px;
     height: 48px;
