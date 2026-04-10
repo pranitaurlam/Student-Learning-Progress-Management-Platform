@@ -18,17 +18,48 @@ export default function LiveRoom() {
         { name: "Priya K.", role: "Student" },
     ]);
     const videoRef = useRef(null);
+    const streamRef = useRef(null);
 
     useEffect(() => {
         const data = localStorage.getItem('mindforge_active_session');
         if (data) setSessionData(JSON.parse(data));
 
-        // Background stream simulation logic
-        if (isCameraOn && videoRef.current) {
-            // In a real app, use navigator.mediaDevices.getUserMedia
-            // Here we just simulate visual feedback
+        // Initialize hardware stream
+        const initStream = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                streamRef.current = stream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream;
+                }
+            } catch (err) {
+                console.error("Hardware access denied:", err);
+                setIsCameraOn(false);
+                setIsMicOn(false);
+            }
+        };
+
+        initStream();
+
+        return () => {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
+
+    // Handle toggles
+    useEffect(() => {
+        if (streamRef.current) {
+            const videoTrack = streamRef.current.getVideoTracks()[0];
+            const audioTrack = streamRef.current.getAudioTracks()[0];
+            if (videoTrack) videoTrack.enabled = isCameraOn;
+            if (audioTrack) audioTrack.enabled = isMicOn;
         }
-    }, [sessionId, isCameraOn]);
+    }, [isCameraOn, isMicOn]);
 
     const handleEndSession = () => {
         if (window.confirm("Are you sure you want to end this session?")) {
@@ -43,29 +74,30 @@ export default function LiveRoom() {
                 {/* Main Video Area */}
                 <div className="video-viewport">
                     <div className={`video-placeholder ${!isCameraOn ? 'dark' : ''}`}>
-                        {isCameraOn ? (
-                            <div className="simulated-video">
-                                <div className="video-ui-overlay">
-                                    <span className="live-badge">LIVE - {sessionData?.topic || "Session"}</span>
-                                </div>
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted // Always mute self-view to avoid feedback
+                            className={`live-video-feed ${!isCameraOn ? 'hidden' : ''}`}
+                        />
+
+                        {!isCameraOn && (
+                            <div className="camera-off-msg">
                                 <div className="mentor-avatar-large">
                                     {sessionData?.topic?.[0] || "M"}
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="camera-off-msg">
-                                <FaVideoSlash size={50} />
+                                <FaVideoSlash size={30} style={{ marginTop: 20, opacity: 0.5 }} />
                                 <p>Camera is turned off</p>
                             </div>
                         )}
-                    </div>
 
-                    {/* Self View Mini */}
-                    <div className="self-view">
-                        <div className="self-video-box">
-                            {isCameraOn ? "Camera On" : <FaVideoSlash />}
+                        <div className="video-ui-overlay">
+                            <span className="live-badge">LIVE - {sessionData?.topic || "Session"}</span>
                         </div>
                     </div>
+
+                    {/* Self View Mini (Optional for more complex UI, but kept simple here) */}
                 </div>
 
                 {/* Sidebar */}
