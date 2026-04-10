@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     FaVideo, FaVideoSlash, FaMicrophone, FaMicrophoneSlash,
-    FaPhoneSlash, FaExpand, FaDesktop, FaUsers, FaRegCommentDots, FaUserTie
+    FaPhoneSlash, FaExpand, FaDesktop, FaUsers, FaRegCommentDots, FaUserTie, FaCircle
 } from 'react-icons/fa';
 import './LiveRoom.css';
 
@@ -15,13 +15,9 @@ export default function LiveRoom() {
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [isMicOn, setIsMicOn] = useState(true);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
     const [audioLevel, setAudioLevel] = useState(0);
     const [sessionData, setSessionData] = useState(null);
-    const [participants] = useState([
-        { name: isMentor ? "Academy Mentor (You)" : "Academy Mentor", role: "Instructor", isMe: isMentor },
-        { name: "Rahul V.", role: "Student" },
-        { name: "Priya K.", role: "Student" },
-    ]);
     const [connectionStatus, setConnectionStatus] = useState("Connecting...");
 
     const videoRef = useRef(null);
@@ -30,11 +26,15 @@ export default function LiveRoom() {
     const pcRef = useRef(null);
     const videoSenderRef = useRef(null);
 
+    // Recording Refs
+    const mediaRecorderRef = useRef(null);
+    const recordedChunksRef = useRef([]);
+    const activeRecordStreamRef = useRef(new MediaStream());
+
     useEffect(() => {
         const data = localStorage.getItem('mindforge_active_session');
         if (data) setSessionData(JSON.parse(data));
 
-        // Setup Local WebRTC
         const pc = new RTCPeerConnection({
             iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
         });
@@ -55,14 +55,12 @@ export default function LiveRoom() {
                     localStorage.setItem('mindforge_webrtc_mentor_ice', JSON.stringify(ice));
                 }
             };
-
             window.addEventListener('storage', handleMentorStorage);
         } else {
-            // Student Setup
             pc.ontrack = (e) => {
                 if (videoRef.current && e.streams[0]) {
                     videoRef.current.srcObject = e.streams[0];
-                    setConnectionStatus(""); // Connected
+                    setConnectionStatus("");
                 }
             };
 
@@ -76,12 +74,14 @@ export default function LiveRoom() {
 
             const existingOffer = localStorage.getItem('mindforge_webrtc_offer');
             if (existingOffer) handleStudentOffer(JSON.parse(existingOffer), pc);
-
             window.addEventListener('storage', handleStudentStorage);
         }
 
         return () => {
             pc.close();
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                mediaRecorderRef.current.stop();
+            }
             stopAllStreams();
             window.removeEventListener('storage', isMentor ? handleMentorStorage : handleStudentStorage);
             if (isMentor) {
@@ -93,7 +93,7 @@ export default function LiveRoom() {
         };
     }, []);
 
-    // ── MENTOR SPECIFIC WEBRTC ── //
+    // ── MENTOR SPECIFIC WEBRTC & RECORDING ── //
     const initMentorStream = async (pc) => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -105,6 +105,7 @@ export default function LiveRoom() {
             stream.getTracks().forEach(track => {
                 const sender = pc.addTrack(track, stream);
                 if (track.kind === 'video') videoSenderRef.current = sender;
+                activeRecordStreamRef.current.addTrack(track); // Add to recording multiplexer stream
             });
 
             startAudioMeter(stream);
@@ -114,7 +115,6 @@ export default function LiveRoom() {
             localStorage.setItem('mindforge_webrtc_offer', JSON.stringify(offer));
 
         } catch (err) {
-            console.error("Camera access denied", err);
             setIsCameraOn(false);
             setIsMicOn(false);
             setConnectionStatus("Camera Error");
@@ -135,9 +135,7 @@ export default function LiveRoom() {
         if (e.key === 'mindforge_webrtc_student_ice' && e.newValue) {
             try {
                 const cands = JSON.parse(e.newValue);
-                if (cands.length > 0) {
-                    await pc.addIceCandidate(new RTCIceCandidate(cands[cands.length - 1]));
-                }
+                if (cands.length > 0) await pc.addIceCandidate(new RTCIceCandidate(cands[cands.length - 1]));
             } catch (err) { }
         }
     };
@@ -162,6 +160,50 @@ export default function LiveRoom() {
         } catch (e) { }
     };
 
+    // ── RECORDING LOGIC ── //
+    const toggleRecording = () => {
+        if (isRecording) {
+            if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        } else {
+            recordedChunksRef.current = [];
+            const mr = new MediaRecorder(activeRecordStreamRef.current, { mimeType: 'video/webm' });
+            mr.ondataavailable = e => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+            mr.onstop = saveRecordingToDB;
+            mr.start(500); // chunk every 500ms
+            mediaRecorderRef.current = mr;
+            setIsRecording(true);
+        }
+    };
+
+    const saveRecordingToDB = () => {
+        if (recordedChunksRef.current.length === 0) return;
+
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const request = indexedDB.open('mindforge_db', 1);
+
+        request.onupgradeneeded = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('recordings')) {
+                db.createObjectStore('recordings', { keyPath: 'id' });
+            }
+        };
+
+        request.onsuccess = e => {
+            const db = e.target.result;
+            const tx = db.transaction('recordings', 'readwrite');
+            const store = tx.objectStore('recordings');
+            store.put({
+                id: Date.now(),
+                subject: sessionData?.subject || 'Undefined',
+                topic: sessionData?.topic || 'Recorded Session',
+                date: new Date().toLocaleDateString(),
+                blob: blob
+            });
+            alert("Recording saved to dashboard successfully!");
+        };
+    };
+
     // ── STUDENT SPECIFIC WEBRTC ── //
     const handleStudentOffer = async (offerDesc, pc) => {
         try {
@@ -183,9 +225,7 @@ export default function LiveRoom() {
         if (e.key === 'mindforge_webrtc_mentor_ice' && e.newValue) {
             try {
                 const cands = JSON.parse(e.newValue);
-                if (cands.length > 0) {
-                    await pc.addIceCandidate(new RTCIceCandidate(cands[cands.length - 1]));
-                }
+                if (cands.length > 0) await pc.addIceCandidate(new RTCIceCandidate(cands[cands.length - 1]));
             } catch (err) { }
         }
     };
@@ -204,8 +244,12 @@ export default function LiveRoom() {
                 setIsScreenSharing(true);
 
                 // Send screen via WebRTC seamlessly
-                if (videoSenderRef.current) {
-                    videoSenderRef.current.replaceTrack(screenStream.getVideoTracks()[0]);
+                if (videoSenderRef.current) videoSenderRef.current.replaceTrack(screenStream.getVideoTracks()[0]);
+
+                // Swap track in active recording stream
+                if (streamRef.current) {
+                    activeRecordStreamRef.current.removeTrack(streamRef.current.getVideoTracks()[0]);
+                    activeRecordStreamRef.current.addTrack(screenStream.getVideoTracks()[0]);
                 }
 
                 screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
@@ -224,10 +268,18 @@ export default function LiveRoom() {
             videoRef.current.srcObject = streamRef.current;
         }
 
-        // Revert to camera in WebRTC
-        if (videoSenderRef.current && streamRef.current) {
-            videoSenderRef.current.replaceTrack(streamRef.current.getVideoTracks()[0]);
+        // Restore WebRTC & Recording Tracks
+        if (streamRef.current) {
+            if (videoSenderRef.current) videoSenderRef.current.replaceTrack(streamRef.current.getVideoTracks()[0]);
+
+            // Try removing screen track and adding video track back
+            try {
+                const existingTracks = activeRecordStreamRef.current.getVideoTracks();
+                existingTracks.forEach(t => activeRecordStreamRef.current.removeTrack(t));
+                activeRecordStreamRef.current.addTrack(streamRef.current.getVideoTracks()[0]);
+            } catch (e) { }
         }
+
         setIsScreenSharing(false);
     };
 
@@ -238,7 +290,6 @@ export default function LiveRoom() {
             if (videoTrack) videoTrack.enabled = isCameraOn;
             if (audioTrack) audioTrack.enabled = isMicOn;
 
-            // Re-sync WebRTC track status
             if (videoSenderRef.current && !isScreenSharing) {
                 videoSenderRef.current.track.enabled = isCameraOn;
             }
@@ -248,8 +299,10 @@ export default function LiveRoom() {
     const handleExit = () => {
         if (isMentor) {
             if (window.confirm("End session for everyone?")) {
+                if (isRecording) {
+                    mediaRecorderRef.current.stop();
+                }
                 localStorage.removeItem('mindforge_active_session');
-                // Clean up RTC signaling
                 localStorage.removeItem('mindforge_webrtc_offer');
                 localStorage.removeItem('mindforge_webrtc_answer');
                 localStorage.removeItem('mindforge_webrtc_mentor_ice');
@@ -270,7 +323,7 @@ export default function LiveRoom() {
                         {connectionStatus && !isMentor && (
                             <div className="connection-status-msg">
                                 <div className="mentor-avatar-large pulse-anim">
-                                    {sessionData?.topic?.[0] || "M"}
+                                    <FaUserTie size={50} />
                                 </div>
                                 <p style={{ marginTop: 20 }}>{connectionStatus}</p>
                                 <p style={{ opacity: 0.5, fontSize: '0.9rem', marginTop: 8 }}>Waiting for instructor broadcast...</p>
@@ -281,7 +334,7 @@ export default function LiveRoom() {
                             ref={videoRef}
                             autoPlay
                             playsInline
-                            muted={isMentor} // Student should hear the audio, Mentor mutes self!
+                            muted={isMentor}
                             className={`live-video-feed ${(!isCameraOn && !isScreenSharing && isMentor) || (connectionStatus && !isMentor) ? 'hidden' : ''} ${isScreenSharing ? 'as-display' : ''}`}
                         />
 
@@ -296,9 +349,10 @@ export default function LiveRoom() {
                         )}
 
                         <div className="video-ui-overlay">
-                            <span className="live-badge">
+                            {isRecording && <span className="live-badge record-pulse"><FaCircle style={{ color: 'red', marginRight: '6px', fontSize: '0.6rem' }} /> REC</span>}
+                            {!isRecording && <span className="live-badge">
                                 {isScreenSharing ? "SCREEN SHARING" : "LIVE"} - {sessionData?.topic || "Session"}
-                            </span>
+                            </span>}
                         </div>
                     </div>
                 </div>
@@ -312,6 +366,15 @@ export default function LiveRoom() {
                     <div className="central-controls">
                         {isMentor && (
                             <>
+                                <button
+                                    className={`control-btn ${isRecording ? 'active' : ''}`}
+                                    onClick={toggleRecording}
+                                    title={isRecording ? "Stop Recording" : "Record Session"}
+                                    style={isRecording ? { backgroundColor: 'rgba(239,68,68,0.2)', color: '#ef4444' } : {}}
+                                >
+                                    <FaCircle style={{ fontSize: '1rem', color: isRecording ? '#ef4444' : 'inherit' }} />
+                                </button>
+
                                 <div className="mic-control-wrapper">
                                     <button
                                         className={`control-btn ${!isMicOn ? 'off' : ''}`}
