@@ -466,29 +466,29 @@ export default function Dashboard() {
                             </div>
                         </div>
                         <div
-                            className="action-card study-room"
-                            onClick={() => navigate("/study-room")}
+                            className="action-card live-class"
+                            onClick={() => navigate("/live-class")}
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") navigate("/study-room");
+                                if (e.key === "Enter" || e.key === " ") navigate("/live-class");
                             }}
                         >
                             <div className="action-icon-wrapper">
                                 <FaVideo className="action-icon" />
                             </div>
                             <div className="action-content">
-                                <h3>Study Room</h3>
-                                <p>Join a combined study session with camera and stopwatch.</p>
+                                <h3>Live Class</h3>
+                                <p>Join an ongoing or upcoming live lecture with your instructors.</p>
                                 <button
                                     type="button"
                                     className="action-btn"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate("/study-room");
+                                        navigate("/live-class");
                                     }}
                                 >
-                                    Join Room →
+                                    Join Class →
                                 </button>
                             </div>
                         </div>

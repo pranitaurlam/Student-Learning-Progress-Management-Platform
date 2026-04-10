@@ -1,0 +1,213 @@
+.live-class-page {
+    min-height: 100vh;
+    background-color: #0b0a1a;
+    color: #e2e8f0;
+}
+
+.live-class-header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+    padding: 60px 0;
+    border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+    margin-bottom: 40px;
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    margin: 15px 0 10px;
+    font-weight: 800;
+}
+
+.header-content p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.live-class-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+}
+
+.class-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 60px;
+}
+
+.class-card {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 30px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+.class-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(14, 165, 233, 0.4);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+.class-card.live {
+    border-color: rgba(14, 165, 233, 0.6);
+    background: linear-gradient(165deg, rgba(14, 165, 233, 0.05) 0%, rgba(30, 41, 59, 0.4) 100%);
+}
+
+.class-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.status-tag {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-tag.live-now {
+    background: rgba(14, 165, 233, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.status-tag.starting-in-2h {
+    background: rgba(167, 139, 250, 0.15);
+    color: #a78bfa;
+}
+
+.status-tag.scheduled {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+.video-icon {
+    font-size: 1.5rem;
+    color: #1e1b4b;
+    opacity: 0.3;
+}
+
+.live-pulse {
+    width: 8px;
+    height: 8px;
+    background: #38bdf8;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(56, 189, 248, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+    }
+}
+
+.class-title {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.class-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.info-item svg {
+    font-size: 1.1rem;
+    color: #0ea5e9;
+}
+
+.join-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #0ea5e9;
+    color: white;
+}
+
+.join-btn:disabled {
+    background: rgba(255, 255, 255, 0.05);
+    color: #64748b;
+    cursor: not-allowed;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.join-btn:not(:disabled):hover {
+    background: #0284c7;
+    filter: brightness(1.1);
+}
+
+.live-class-empty {
+    text-align: center;
+    background: rgba(30, 41, 59, 0.2);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 50px;
+}
+
+.live-class-empty h3 {
+    margin-bottom: 10px;
+}
+
+.secondary-btn {
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid #0ea5e9;
+    color: #0ea5e9;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.secondary-btn:hover {
+    background: rgba(14, 165, 233, 0.05);
+}
