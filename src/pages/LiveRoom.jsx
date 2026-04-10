@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     FaVideo, FaVideoSlash, FaMicrophone, FaMicrophoneSlash,
-    FaPhoneSlash, FaExpand, FaDesktop, FaUsers, FaRegCommentDots
+    FaPhoneSlash, FaExpand, FaDesktop, FaUsers, FaRegCommentDots, FaUserTie
 } from 'react-icons/fa';
 import './LiveRoom.css';
 
@@ -288,7 +288,7 @@ export default function LiveRoom() {
                         {!isCameraOn && !isScreenSharing && isMentor && (
                             <div className="camera-off-msg">
                                 <div className="mentor-avatar-large">
-                                    {sessionData?.topic?.[0] || "M"}
+                                    <FaUserTie size={50} />
                                 </div>
                                 <FaVideoSlash size={30} style={{ marginTop: 20, opacity: 0.5 }} />
                                 <p>Camera is turned off</p>
