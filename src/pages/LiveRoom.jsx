@@ -383,7 +383,17 @@ export default function LiveRoom() {
                         </button>
                     </div>
 
-                    <div className="utility-controls">
+                    <div className="utility-controls" style={{ display: 'flex', gap: '10px' }}>
+                        {isMentor && (
+                            <button
+                                className="secondary-btn"
+                                style={{ padding: '8px 12px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.1)' }}
+                                onClick={() => window.open('/dashboard', '_blank')}
+                                title="Open Dashboard in new tab to see what students see"
+                            >
+                                <FaDesktop style={{ marginRight: '5px' }} /> Test Student View
+                            </button>
+                        )}
                         <button className="icon-btn" onClick={() => document.documentElement.requestFullscreen()}><FaExpand /></button>
                     </div>
                 </div>
