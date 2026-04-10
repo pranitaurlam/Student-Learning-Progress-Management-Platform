@@ -37,6 +37,7 @@ const TABS = [
     { key: 'messages', label: 'Messages', icon: FaComments, color: '#ec4899' },
     { key: 'scores', label: 'Student Scores', icon: FaTrophy, color: '#fbbf24' },
     { key: 'materials', label: 'Study Material', icon: FaFolderOpen, color: '#60a5fa' },
+    { key: 'recordings', label: 'Recordings', icon: FaVideo, color: '#ef4444' },
     { key: 'attendance', label: 'Attendance', icon: FaQrcode, color: '#f87171' },
 ];
 
@@ -247,6 +248,52 @@ export default function Staff() {
         setMatForm({ title: '', subject: '', file: null });
     };
 
+    /* ── Recordings Management ── */
+    const [recordings, setRecordings] = useState([]);
+    useEffect(() => {
+        if (activeTab === 'recordings') {
+            const loadRecordings = () => {
+                const request = indexedDB.open('mindforge_stream_db', 1);
+                request.onsuccess = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('recordings')) {
+                        db.close();
+                        return;
+                    }
+                    const tx = db.transaction('recordings', 'readonly');
+                    const store = tx.objectStore('recordings');
+                    const getReq = store.getAll();
+                    getReq.onsuccess = () => {
+                        const recs = (getReq.result || []).sort((a, b) => b.id - a.id);
+                        const mappedRecs = recs.map(r => ({ ...r, videoUrl: URL.createObjectURL(r.blob) }));
+                        setRecordings(mappedRecs);
+                        db.close();
+                    };
+                    getReq.onerror = () => db.close();
+                };
+            };
+            loadRecordings();
+        }
+    }, [activeTab]);
+
+    const deleteRecording = (id) => {
+        if (!window.confirm("Are you sure you want to delete this recording? It will be removed from the student dashboard entirely.")) return;
+
+        const request = indexedDB.open('mindforge_stream_db', 1);
+        request.onsuccess = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('recordings')) { db.close(); return; }
+            const tx = db.transaction('recordings', 'readwrite');
+            const store = tx.objectStore('recordings');
+            const delReq = store.delete(id);
+            delReq.onsuccess = () => {
+                setRecordings(p => p.filter(r => r.id !== id));
+                db.close();
+            };
+            delReq.onerror = () => db.close();
+        };
+    };
+
     /* ── Attendance ── */
     const [attSession, setAttSession] = useState({ subject: '', label: '' });
     const [qrValue, setQrValue] = useState('');
@@ -360,8 +407,8 @@ export default function Staff() {
                                                     : assignments.length}
                                         </span>
                                     )}
-                                    {activeTab === tab.key && tab.key === 'materials' && materials.length > 0 && (
-                                        <span className="tab-count">{materials.length}</span>
+                                    {activeTab === tab.key && (tab.key === 'materials' || tab.key === 'recordings') && (tab.key === 'materials' ? materials.length > 0 : recordings.length > 0) && (
+                                        <span className="tab-count">{tab.key === 'materials' ? materials.length : recordings.length}</span>
                                     )}
                                 </button>
                             );
@@ -747,6 +794,46 @@ export default function Staff() {
                                             URL.revokeObjectURL(m.url);
                                             setMaterials(p => p.filter(x => x.id !== m.id));
                                         }}>
+                                            <FaTrash />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ────── RECORDINGS ────── */}
+                {activeTab === 'recordings' && (
+                    <div className="tab-panel">
+                        <div className="panel-intro">
+                            <h2>Class Recordings</h2>
+                            <p>Manage raw WebRTC class recordings. Deleting a video here removes it from the Student Dashboard.</p>
+                        </div>
+
+                        <div className="mat-list">
+                            {recordings.length === 0 && (
+                                <div className="empty-state">No recorded classes yet. Start a session from the Timetable and click the red Record button.</div>
+                            )}
+                            {recordings.map(m => (
+                                <div key={m.id} className="mat-item">
+                                    <div className="mat-file-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
+                                        <FaVideo />
+                                        <span className="mat-ext">WEBM</span>
+                                    </div>
+                                    <div className="mat-info">
+                                        <strong className="mat-title">{m.subject} - {m.topic}</strong>
+                                        <div className="mat-meta">
+                                            <span className="subj-pill" style={{ '--c': SUBJECT_COLORS[m.subject] || '#ef4444' }}>{m.subject || "Unknown"}</span>
+                                            <span className="row-due">{(m.blob.size / (1024 * 1024)).toFixed(2)} MB</span>
+                                            <span className="row-due">Recorded {m.date}</span>
+                                        </div>
+                                    </div>
+                                    <div className="mat-actions">
+                                        <a href={m.videoUrl} target="_blank" rel="noopener noreferrer" className="icon-act save" title="Watch Video">
+                                            <span style={{ fontSize: 12 }}>▶ Play</span>
+                                        </a>
+                                        <button className="icon-act delete" onClick={() => deleteRecording(m.id)} title="Delete Recording">
                                             <FaTrash />
                                         </button>
                                     </div>
