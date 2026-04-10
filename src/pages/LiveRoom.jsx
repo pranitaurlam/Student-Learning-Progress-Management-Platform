@@ -10,7 +10,6 @@ export default function LiveRoom() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
 
-    // Check if the user is a mentor
     const isMentor = new URLSearchParams(window.location.search).get('mode') === 'mentor';
 
     const [isCameraOn, setIsCameraOn] = useState(true);
@@ -18,47 +17,133 @@ export default function LiveRoom() {
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [audioLevel, setAudioLevel] = useState(0);
     const [sessionData, setSessionData] = useState(null);
-    const [participants, setParticipants] = useState([
+    const [participants] = useState([
         { name: isMentor ? "Academy Mentor (You)" : "Academy Mentor", role: "Instructor", isMe: isMentor },
         { name: "Rahul V.", role: "Student" },
         { name: "Priya K.", role: "Student" },
     ]);
+    const [connectionStatus, setConnectionStatus] = useState("Connecting...");
 
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const screenStreamRef = useRef(null);
+    const pcRef = useRef(null);
+    const videoSenderRef = useRef(null);
 
     useEffect(() => {
         const data = localStorage.getItem('mindforge_active_session');
         if (data) setSessionData(JSON.parse(data));
 
-        initStream();
+        // Setup Local WebRTC
+        const pc = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+        pcRef.current = pc;
+
+        if (isMentor) {
+            localStorage.removeItem('mindforge_webrtc_offer');
+            localStorage.removeItem('mindforge_webrtc_answer');
+            localStorage.setItem('mindforge_webrtc_mentor_ice', '[]');
+            localStorage.setItem('mindforge_webrtc_student_ice', '[]');
+
+            initMentorStream(pc);
+
+            pc.onicecandidate = (e) => {
+                if (e.candidate) {
+                    const ice = JSON.parse(localStorage.getItem('mindforge_webrtc_mentor_ice') || '[]');
+                    ice.push(e.candidate);
+                    localStorage.setItem('mindforge_webrtc_mentor_ice', JSON.stringify(ice));
+                }
+            };
+
+            window.addEventListener('storage', handleMentorStorage);
+        } else {
+            // Student Setup
+            pc.ontrack = (e) => {
+                if (videoRef.current && e.streams[0]) {
+                    videoRef.current.srcObject = e.streams[0];
+                    setConnectionStatus(""); // Connected
+                }
+            };
+
+            pc.onicecandidate = (e) => {
+                if (e.candidate) {
+                    const ice = JSON.parse(localStorage.getItem('mindforge_webrtc_student_ice') || '[]');
+                    ice.push(e.candidate);
+                    localStorage.setItem('mindforge_webrtc_student_ice', JSON.stringify(ice));
+                }
+            };
+
+            const existingOffer = localStorage.getItem('mindforge_webrtc_offer');
+            if (existingOffer) handleStudentOffer(JSON.parse(existingOffer), pc);
+
+            window.addEventListener('storage', handleStudentStorage);
+        }
 
         return () => {
+            pc.close();
             stopAllStreams();
+            window.removeEventListener('storage', isMentor ? handleMentorStorage : handleStudentStorage);
+            if (isMentor) {
+                localStorage.removeItem('mindforge_webrtc_offer');
+                localStorage.removeItem('mindforge_webrtc_answer');
+                localStorage.removeItem('mindforge_webrtc_mentor_ice');
+                localStorage.removeItem('mindforge_webrtc_student_ice');
+            }
         };
     }, []);
 
-    const stopAllStreams = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-        }
-        if (screenStreamRef.current) {
-            screenStreamRef.current.getTracks().forEach(track => track.stop());
+    // ── MENTOR SPECIFIC WEBRTC ── //
+    const initMentorStream = async (pc) => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            streamRef.current = stream;
+
+            if (videoRef.current) videoRef.current.srcObject = stream;
+            setConnectionStatus("");
+
+            stream.getTracks().forEach(track => {
+                const sender = pc.addTrack(track, stream);
+                if (track.kind === 'video') videoSenderRef.current = sender;
+            });
+
+            startAudioMeter(stream);
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            localStorage.setItem('mindforge_webrtc_offer', JSON.stringify(offer));
+
+        } catch (err) {
+            console.error("Camera access denied", err);
+            setIsCameraOn(false);
+            setIsMicOn(false);
+            setConnectionStatus("Camera Error");
         }
     };
 
-    const initStream = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: true
-            });
-            streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
+    const handleMentorStorage = async (e) => {
+        const pc = pcRef.current;
+        if (!pc) return;
+        if (e.key === 'mindforge_webrtc_answer' && e.newValue) {
+            try {
+                const answer = JSON.parse(e.newValue);
+                if (pc.signalingState === 'have-local-offer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                }
+            } catch (err) { }
+        }
+        if (e.key === 'mindforge_webrtc_student_ice' && e.newValue) {
+            try {
+                const cands = JSON.parse(e.newValue);
+                if (cands.length > 0) {
+                    await pc.addIceCandidate(new RTCIceCandidate(cands[cands.length - 1]));
+                }
+            } catch (err) { }
+        }
+    };
 
+    const startAudioMeter = (stream) => {
+        try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const source = audioContext.createMediaStreamSource(stream);
             const analyser = audioContext.createAnalyser();
@@ -74,11 +159,40 @@ export default function LiveRoom() {
                 requestAnimationFrame(updateMeter);
             };
             updateMeter();
-        } catch (err) {
-            console.error("Hardware access denied:", err);
-            setIsCameraOn(false);
-            setIsMicOn(false);
+        } catch (e) { }
+    };
+
+    // ── STUDENT SPECIFIC WEBRTC ── //
+    const handleStudentOffer = async (offerDesc, pc) => {
+        try {
+            if (pc.signalingState !== 'stable') return;
+            await pc.setRemoteDescription(new RTCSessionDescription(offerDesc));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            localStorage.setItem('mindforge_webrtc_answer', JSON.stringify(answer));
+        } catch (err) { }
+    };
+
+    const handleStudentStorage = async (e) => {
+        const pc = pcRef.current;
+        if (!pc) return;
+        if (e.key === 'mindforge_webrtc_offer' && e.newValue) {
+            setConnectionStatus("Instructor went live!");
+            handleStudentOffer(JSON.parse(e.newValue), pc);
         }
+        if (e.key === 'mindforge_webrtc_mentor_ice' && e.newValue) {
+            try {
+                const cands = JSON.parse(e.newValue);
+                if (cands.length > 0) {
+                    await pc.addIceCandidate(new RTCIceCandidate(cands[cands.length - 1]));
+                }
+            } catch (err) { }
+        }
+    };
+
+    const stopAllStreams = () => {
+        if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+        if (screenStreamRef.current) screenStreamRef.current.getTracks().forEach(track => track.stop());
     };
 
     const toggleScreenShare = async () => {
@@ -86,14 +200,16 @@ export default function LiveRoom() {
             try {
                 const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 screenStreamRef.current = screenStream;
-                if (videoRef.current) {
-                    videoRef.current.srcObject = screenStream;
-                }
+                if (videoRef.current) videoRef.current.srcObject = screenStream;
                 setIsScreenSharing(true);
+
+                // Send screen via WebRTC seamlessly
+                if (videoSenderRef.current) {
+                    videoSenderRef.current.replaceTrack(screenStream.getVideoTracks()[0]);
+                }
+
                 screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
-            } catch (err) {
-                console.error("Screen share failed:", err);
-            }
+            } catch (err) { console.error("Screen share failed:", err); }
         } else {
             stopScreenShare();
         }
@@ -107,23 +223,37 @@ export default function LiveRoom() {
         if (videoRef.current && streamRef.current) {
             videoRef.current.srcObject = streamRef.current;
         }
+
+        // Revert to camera in WebRTC
+        if (videoSenderRef.current && streamRef.current) {
+            videoSenderRef.current.replaceTrack(streamRef.current.getVideoTracks()[0]);
+        }
         setIsScreenSharing(false);
     };
 
     useEffect(() => {
-        if (streamRef.current) {
+        if (isMentor && streamRef.current) {
             const videoTrack = streamRef.current.getVideoTracks()[0];
             const audioTrack = streamRef.current.getAudioTracks()[0];
             if (videoTrack) videoTrack.enabled = isCameraOn;
             if (audioTrack) audioTrack.enabled = isMicOn;
+
+            // Re-sync WebRTC track status
+            if (videoSenderRef.current && !isScreenSharing) {
+                videoSenderRef.current.track.enabled = isCameraOn;
+            }
         }
-    }, [isCameraOn, isMicOn]);
+    }, [isCameraOn, isMicOn, isMentor, isScreenSharing]);
 
     const handleExit = () => {
-        const isMentor = new URLSearchParams(window.location.search).get('mode') === 'mentor';
         if (isMentor) {
             if (window.confirm("End session for everyone?")) {
                 localStorage.removeItem('mindforge_active_session');
+                // Clean up RTC signaling
+                localStorage.removeItem('mindforge_webrtc_offer');
+                localStorage.removeItem('mindforge_webrtc_answer');
+                localStorage.removeItem('mindforge_webrtc_mentor_ice');
+                localStorage.removeItem('mindforge_webrtc_student_ice');
                 navigate('/staff');
             }
         } else {
@@ -135,16 +265,27 @@ export default function LiveRoom() {
         <div className={`live-room-page ${isMentor ? 'with-sidebar' : 'full-screen'}`}>
             <div className="room-container">
                 <div className="video-viewport">
-                    <div className={`video-placeholder ${!isCameraOn && !isScreenSharing ? 'dark' : ''}`}>
+                    <div className={`video-placeholder ${!isCameraOn && !isScreenSharing && isMentor ? 'dark' : ''}`}>
+
+                        {connectionStatus && !isMentor && (
+                            <div className="connection-status-msg">
+                                <div className="mentor-avatar-large pulse-anim">
+                                    {sessionData?.topic?.[0] || "M"}
+                                </div>
+                                <p style={{ marginTop: 20 }}>{connectionStatus}</p>
+                                <p style={{ opacity: 0.5, fontSize: '0.9rem', marginTop: 8 }}>Waiting for instructor broadcast...</p>
+                            </div>
+                        )}
+
                         <video
                             ref={videoRef}
                             autoPlay
                             playsInline
-                            muted
-                            className={`live-video-feed ${(!isCameraOn && !isScreenSharing) ? 'hidden' : ''} ${isScreenSharing ? 'as-display' : ''}`}
+                            muted={isMentor} // Student should hear the audio, Mentor mutes self!
+                            className={`live-video-feed ${(!isCameraOn && !isScreenSharing && isMentor) || (connectionStatus && !isMentor) ? 'hidden' : ''} ${isScreenSharing ? 'as-display' : ''}`}
                         />
 
-                        {!isCameraOn && !isScreenSharing && (
+                        {!isCameraOn && !isScreenSharing && isMentor && (
                             <div className="camera-off-msg">
                                 <div className="mentor-avatar-large">
                                     {sessionData?.topic?.[0] || "M"}
@@ -162,7 +303,6 @@ export default function LiveRoom() {
                     </div>
                 </div>
 
-                {/* Conditional Sidebar for Mentor Only */}
                 {isMentor && (
                     <div className="room-sidebar">
                         <div className="sidebar-header">
