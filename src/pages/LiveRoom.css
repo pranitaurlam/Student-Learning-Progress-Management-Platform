@@ -28,6 +28,13 @@
     /* Mirror view for self */
 }
 
+.live-video-feed.as-display {
+    object-fit: contain;
+    transform: none;
+    /* No mirror for screen share */
+    background: #000;
+}
+
 .live-video-feed.hidden {
     display: none;
 }
@@ -292,6 +299,12 @@
 
 .control-btn.off:hover {
     background: #dc2626;
+}
+
+.control-btn.share-btn.active {
+    background: #0ea5e9;
+    color: white;
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
 }
 
 .control-btn.end-btn {
