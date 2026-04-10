@@ -257,7 +257,7 @@ export default function LiveRoom() {
                 navigate('/staff');
             }
         } else {
-            navigate('/live-class');
+            navigate('/dashboard');
         }
     };
 
