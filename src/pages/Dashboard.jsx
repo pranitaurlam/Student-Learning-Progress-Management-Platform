@@ -183,11 +183,7 @@ const announcementsData = [
     },
 ];
 
-const timetableData = [
-    { id: 1, time: "10:00 AM", subject: "DBMS", topic: "Normalization" },
-    { id: 2, time: "11:30 AM", subject: "Python", topic: "Decorators" },
-    { id: 3, time: "02:00 PM", subject: "AI/ML", topic: "Backpropagation" },
-];
+// Dynamic Timetable is now used
 
 const studyMaterialData = [
     {
@@ -258,6 +254,17 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [streakData, setStreakData] = useState(getStreakData);
     const [analytics, setAnalytics] = useState(() => computeAnalytics(loadHistory()));
+    const [timetable, setTimetable] = useState([]);
+
+    useEffect(() => {
+        const loadTt = () => {
+            const stored = localStorage.getItem('mindforge_timetable');
+            if (stored) setTimetable(JSON.parse(stored));
+        };
+        loadTt();
+        const interval = setInterval(loadTt, 5000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Re-compute analytics whenever the page becomes visible (user returns from a test)
     useEffect(() => {
@@ -618,7 +625,7 @@ export default function Dashboard() {
                                 <span className="view-all">Full Schedule</span>
                             </div>
                             <div className="update-list">
-                                {timetableData.map((item) => (
+                                {timetable.length > 0 ? timetable.slice(0, 3).map((item) => (
                                     <div key={item.id} className="update-item">
                                         <div className="update-info">
                                             <h4>{item.subject}</h4>
@@ -628,7 +635,9 @@ export default function Dashboard() {
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <p className="empty-msg" style={{ padding: '20px', fontSize: '0.8rem', opacity: 0.5 }}>No classes scheduled today.</p>
+                                )}
                             </div>
                         </div>
 
