@@ -6,33 +6,44 @@ import './LiveClass.css';
 export default function LiveClass() {
     const navigate = useNavigate();
     const [classes, setClasses] = useState([]);
+    const [activeSession, setActiveSession] = useState(null);
 
     useEffect(() => {
         const loadClasses = () => {
             try {
-                const stored = localStorage.getItem('mindforge_timetable');
-                if (stored) {
-                    const data = JSON.parse(stored);
-                    // Add some status logic for demo purposes
-                    const enriched = data.map((cls, idx) => ({
-                        ...cls,
-                        instructor: "Academy Mentor", // In a real app, this would come from the timetable data
-                        date: "Today",
-                        status: idx === 0 ? "Live Now" : "Scheduled",
-                        link: "#"
-                    }));
-                    setClasses(enriched);
-                }
+                // Load Timetable
+                const storedTt = localStorage.getItem('mindforge_timetable');
+                const storedActive = localStorage.getItem('mindforge_active_session');
+
+                let timetable = [];
+                if (storedTt) timetable = JSON.parse(storedTt);
+
+                let active = null;
+                if (storedActive) active = JSON.parse(storedActive);
+                setActiveSession(active);
+
+                // Enriched classes
+                const enriched = timetable.map((cls) => ({
+                    ...cls,
+                    instructor: "Academy Mentor",
+                    date: "Today",
+                    status: active && active.id === cls.id ? "Live Now" : "Scheduled",
+                    link: "#"
+                }));
+                setClasses(enriched);
             } catch (e) {
                 console.error("Failed to load timetable", e);
             }
         };
 
         loadClasses();
-        // Poll for changes
         const interval = setInterval(loadClasses, 2000);
         return () => clearInterval(interval);
     }, []);
+
+    const joinClass = (cls) => {
+        navigate(`/live-room/${cls.id}`);
+    };
 
     return (
         <div className="live-class-page">
@@ -74,8 +85,12 @@ export default function LiveClass() {
                                     </div>
                                 </div>
 
-                                <button className="join-btn" disabled={cls.status !== 'Live Now'}>
-                                    {cls.status === 'Live Now' ? 'Join Class Now' : 'Remind Me'}
+                                <button
+                                    className="join-btn"
+                                    disabled={cls.status !== 'Live Now'}
+                                    onClick={() => joinClass(cls)}
+                                >
+                                    {cls.status === 'Live Now' ? 'Join Class Now' : 'Wait for Mentor'}
                                 </button>
                             </div>
                         ))}

@@ -13,6 +13,7 @@ import PracticeQuestions from './pages/PracticeQuestions';
 import QuestionDetail from './pages/QuestionDetail';
 import Planner from './pages/Planner';
 import LiveClass from "./pages/LiveClass";
+import LiveRoom from "./pages/LiveRoom";
 import Certificates from './pages/Certificates';
 import Staff from './pages/Staff';
 import './index.css';
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/practice-questions/:subjectId/:questionId" element={<QuestionDetail />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/live-class" element={<LiveClass />} />
+        <Route path="/live-room/:sessionId" element={<LiveRoom />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/staff" element={<Staff />} />
       </Routes>

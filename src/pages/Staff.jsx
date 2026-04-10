@@ -6,6 +6,7 @@ import {
     FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane, FaLock, FaVideo
 } from 'react-icons/fa';
 import { IoArrowBack, IoSend } from 'react-icons/io5';
+import { useNavigate } from 'react-router-dom';
 import './Staff.css';
 
 const SUBJECTS = ['AI/ML', 'DSA', 'Web Dev', 'DBMS', 'Python'];
@@ -48,6 +49,7 @@ const SUBJECT_COLORS = {
 };
 
 export default function Staff() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('timetable');
 
     /* ── Student Doubts (Messages) ── */
@@ -168,6 +170,17 @@ export default function Staff() {
     const saveTtEdit = (id) => {
         setTimetable(prev => prev.map(r => r.id === id ? { ...r, ...ttEdit } : r));
         setTtEdit(null);
+    };
+
+    const startClass = (session) => {
+        // Set this session as active in a separate localStorage key
+        const activeSession = {
+            ...session,
+            startTime: Date.now(),
+            instructor: "Academy Mentor"
+        };
+        localStorage.setItem('mindforge_active_session', JSON.stringify(activeSession));
+        navigate(`/live-room/${session.id}`);
     };
 
     /* ── Announcements ── */
@@ -422,7 +435,7 @@ export default function Staff() {
                                                 <span className="item-sub">{row.topic}</span>
                                             </div>
                                             <div className="item-actions">
-                                                <button className="start-class-btn" onClick={() => alert(`Starting Live Class: ${row.topic}`)}>
+                                                <button className="start-class-btn" onClick={() => startClass(row)}>
                                                     <FaVideo /> Start Class
                                                 </button>
                                                 <button className="icon-act edit" onClick={() => setTtEdit({ ...row })}><FaEdit /></button>
