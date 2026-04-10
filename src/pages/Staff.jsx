@@ -3,7 +3,7 @@ import {
     FaUserShield, FaCalendarAlt, FaBullhorn, FaBookOpen,
     FaPlus, FaTrash, FaEdit, FaCheck, FaTimes,
     FaUsers, FaChartBar, FaClock, FaTrophy, FaStar,
-    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane, FaLock
+    FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane, FaLock, FaVideo
 } from 'react-icons/fa';
 import { IoArrowBack, IoSend } from 'react-icons/io5';
 import './Staff.css';
@@ -411,6 +411,9 @@ export default function Staff() {
                                                 <span className="item-sub">{row.topic}</span>
                                             </div>
                                             <div className="item-actions">
+                                                <button className="start-class-btn" onClick={() => alert(`Starting Live Class: ${row.topic}`)}>
+                                                    <FaVideo /> Start Class
+                                                </button>
                                                 <button className="icon-act edit" onClick={() => setTtEdit({ ...row })}><FaEdit /></button>
                                                 <button className="icon-act delete" onClick={() => setTimetable(p => p.filter(r => r.id !== row.id))}><FaTrash /></button>
                                             </div>
