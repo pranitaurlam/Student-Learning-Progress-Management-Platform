@@ -10,6 +10,10 @@ export default function Navbar() {
   const location = useLocation();
 
   const isStaffView = location.pathname === '/staff';
+  const isLiveRoom = location.pathname.startsWith('/live-room');
+
+  // Hide navbar in live room for immersive experience
+  if (isLiveRoom) return null;
 
   const handleStaffLogin = () => {
     const password = prompt('Enter Staff Password:');
