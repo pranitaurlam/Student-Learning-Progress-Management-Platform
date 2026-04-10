@@ -689,6 +689,38 @@ export default function Dashboard() {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Recorded Classes Card */}
+                        <div className="update-card recorded-classes">
+                            <div className="update-header">
+                                <div className="update-title">
+                                    <FaVideo className="update-icon" style={{ color: '#ef4444' }} />
+                                    <h3>Recorded Classes</h3>
+                                </div>
+                                <span className="view-all">View Archive</span>
+                            </div>
+                            <div className="update-list">
+                                {recordings.length > 0 ? recordings.map((item) => (
+                                    <a
+                                        key={item.id}
+                                        href={item.videoUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="update-item study-item"
+                                    >
+                                        <div className="update-info">
+                                            <h4>{item.subject} - {item.topic}</h4>
+                                            <div className="update-meta">
+                                                <span className="subject-tag">Video Recording</span>
+                                                <span className="due-date">{item.date}</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                )) : (
+                                    <p className="empty-msg" style={{ padding: '20px', fontSize: '0.8rem', opacity: 0.5 }}>No recorded sessions available yet.</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </section>
 
