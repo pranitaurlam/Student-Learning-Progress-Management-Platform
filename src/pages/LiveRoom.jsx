@@ -180,7 +180,7 @@ export default function LiveRoom() {
         if (recordedChunksRef.current.length === 0) return;
 
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-        const request = indexedDB.open('mindforge_db', 2);
+        const request = indexedDB.open('mindforge_stream_db', 1);
 
         request.onupgradeneeded = e => {
             const db = e.target.result;
@@ -193,14 +193,18 @@ export default function LiveRoom() {
             const db = e.target.result;
             const tx = db.transaction('recordings', 'readwrite');
             const store = tx.objectStore('recordings');
-            store.put({
+            const putReq = store.put({
                 id: Date.now(),
                 subject: sessionData?.subject || 'Undefined',
                 topic: sessionData?.topic || 'Recorded Session',
                 date: new Date().toLocaleDateString(),
                 blob: blob
             });
-            alert("Recording saved to dashboard successfully!");
+            putReq.onsuccess = () => {
+                alert("Recording saved to dashboard successfully!");
+                db.close();
+            };
+            putReq.onerror = () => db.close();
         };
     };
 
