@@ -130,6 +130,7 @@ export default function LiveRoom() {
     return (
         <div className="live-room-page">
             <div className="room-container">
+                {/* Main Video Area */}
                 <div className="video-viewport">
                     <div className={`video-placeholder ${!isCameraOn && !isScreenSharing ? 'dark' : ''}`}>
                         <video
@@ -154,32 +155,6 @@ export default function LiveRoom() {
                             <span className="live-badge">
                                 {isScreenSharing ? "SCREEN SHARING" : "LIVE"} - {sessionData?.topic || "Session"}
                             </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="room-sidebar">
-                    <div className="sidebar-header">
-                        <h3><FaUsers /> Participants ({participants.length})</h3>
-                    </div>
-                    <div className="participant-list">
-                        {participants.map((p, idx) => (
-                            <div key={idx} className="participant-item">
-                                <div className="p-avatar">{p.name[0]}</div>
-                                <div className="p-info">
-                                    <span className="p-name">{p.name}</span>
-                                    <span className="p-role">{p.role}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="chat-mini-section">
-                        <div className="sidebar-header">
-                            <h3><FaRegCommentDots /> Live Chat</h3>
-                        </div>
-                        <div className="chat-placeholder">
-                            <p>Chat is enabled during the session.</p>
                         </div>
                     </div>
                 </div>
