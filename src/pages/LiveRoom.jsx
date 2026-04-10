@@ -180,7 +180,7 @@ export default function LiveRoom() {
         if (recordedChunksRef.current.length === 0) return;
 
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-        const request = indexedDB.open('mindforge_db', 1);
+        const request = indexedDB.open('mindforge_db', 2);
 
         request.onupgradeneeded = e => {
             const db = e.target.result;

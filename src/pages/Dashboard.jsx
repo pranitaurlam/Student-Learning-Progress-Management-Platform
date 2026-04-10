@@ -263,7 +263,13 @@ export default function Dashboard() {
             if (stored) setTimetable(JSON.parse(stored));
         };
         const loadRecordings = () => {
-            const request = indexedDB.open('mindforge_db', 1);
+            const request = indexedDB.open('mindforge_db', 2);
+            request.onupgradeneeded = e => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('recordings')) {
+                    db.createObjectStore('recordings', { keyPath: 'id' });
+                }
+            };
             request.onsuccess = e => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains('recordings')) return;
