@@ -180,7 +180,7 @@ export default function Staff() {
             instructor: "Academy Mentor"
         };
         localStorage.setItem('mindforge_active_session', JSON.stringify(activeSession));
-        navigate(`/live-room/${session.id}`);
+        navigate(`/live-room/${session.id}?mode=mentor`);
     };
 
     /* ── Announcements ── */

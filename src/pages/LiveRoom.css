@@ -7,9 +7,16 @@
 
 .room-container {
     display: grid;
-    grid-template-columns: 1fr;
     grid-template-rows: 1fr 80px;
     height: 100%;
+}
+
+.with-sidebar .room-container {
+    grid-template-columns: 1fr 300px;
+}
+
+.full-screen .room-container {
+    grid-template-columns: 1fr;
 }
 
 .video-viewport {

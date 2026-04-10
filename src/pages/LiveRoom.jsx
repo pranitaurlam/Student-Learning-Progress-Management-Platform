@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     FaVideo, FaVideoSlash, FaMicrophone, FaMicrophoneSlash,
     FaPhoneSlash, FaUsers, FaRegCommentDots, FaExpand, FaDesktop
@@ -8,14 +8,19 @@ import './LiveRoom.css';
 
 export default function LiveRoom() {
     const { sessionId } = useParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+
+    // Check if the user is a mentor
+    const isMentor = searchParams.get('mode') === 'mentor';
+
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [isMicOn, setIsMicOn] = useState(true);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [audioLevel, setAudioLevel] = useState(0);
     const [sessionData, setSessionData] = useState(null);
     const [participants, setParticipants] = useState([
-        { name: "Academy Mentor (You)", role: "Instructor", isMe: true },
+        { name: isMentor ? "Academy Mentor (You)" : "Academy Mentor", role: "Instructor", isMe: isMentor },
         { name: "Rahul V.", role: "Student" },
         { name: "Priya K.", role: "Student" },
     ]);
@@ -54,7 +59,6 @@ export default function LiveRoom() {
                 videoRef.current.srcObject = stream;
             }
 
-            // Audio Metering
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const source = audioContext.createMediaStreamSource(stream);
             const analyser = audioContext.createAnalyser();
@@ -86,11 +90,7 @@ export default function LiveRoom() {
                     videoRef.current.srcObject = screenStream;
                 }
                 setIsScreenSharing(true);
-
-                // Handle stop sharing from browser UI
-                screenStream.getVideoTracks()[0].onended = () => {
-                    stopScreenShare();
-                };
+                screenStream.getVideoTracks()[0].onended = () => stopScreenShare();
             } catch (err) {
                 console.error("Screen share failed:", err);
             }
@@ -110,7 +110,6 @@ export default function LiveRoom() {
         setIsScreenSharing(false);
     };
 
-    // Handle Mic/Camera Toggles
     useEffect(() => {
         if (streamRef.current) {
             const videoTrack = streamRef.current.getVideoTracks()[0];
@@ -120,17 +119,20 @@ export default function LiveRoom() {
         }
     }, [isCameraOn, isMicOn]);
 
-    const handleEndSession = () => {
-        if (window.confirm("Are you sure you want to end this session?")) {
-            localStorage.removeItem('mindforge_active_session');
-            navigate('/staff');
+    const handleExit = () => {
+        if (isMentor) {
+            if (window.confirm("End session for everyone?")) {
+                localStorage.removeItem('mindforge_active_session');
+                navigate('/staff');
+            }
+        } else {
+            navigate('/live-class');
         }
     };
 
     return (
-        <div className="live-room-page">
+        <div className={`live-room-page ${isMentor ? 'with-sidebar' : 'full-screen'}`}>
             <div className="room-container">
-                {/* Main Video Area */}
                 <div className="video-viewport">
                     <div className={`video-placeholder ${!isCameraOn && !isScreenSharing ? 'dark' : ''}`}>
                         <video
@@ -159,6 +161,35 @@ export default function LiveRoom() {
                     </div>
                 </div>
 
+                {/* Conditional Sidebar for Mentor Only */}
+                {isMentor && (
+                    <div className="room-sidebar">
+                        <div className="sidebar-header">
+                            <h3><FaUsers /> Participants ({participants.length})</h3>
+                        </div>
+                        <div className="participant-list">
+                            {participants.map((p, idx) => (
+                                <div key={idx} className="participant-item">
+                                    <div className="p-avatar">{p.name[0]}</div>
+                                    <div className="p-info">
+                                        <span className="p-name">{p.name}</span>
+                                        <span className="p-role">{p.role}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="chat-mini-section">
+                            <div className="sidebar-header">
+                                <h3><FaRegCommentDots /> Live Chat</h3>
+                            </div>
+                            <div className="chat-placeholder">
+                                <p>Chat is enabled during the session.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="controls-bar">
                     <div className="room-info-mini">
                         <strong>{sessionData?.subject || "Academy"}</strong>
@@ -184,7 +215,6 @@ export default function LiveRoom() {
                         <button
                             className={`control-btn ${!isCameraOn ? 'off' : ''}`}
                             onClick={() => setIsCameraOn(!isCameraOn)}
-                            title={isCameraOn ? "Stop Video" : "Start Video"}
                             disabled={isScreenSharing}
                         >
                             {isCameraOn ? <FaVideo /> : <FaVideoSlash />}
@@ -193,18 +223,17 @@ export default function LiveRoom() {
                         <button
                             className={`control-btn share-btn ${isScreenSharing ? 'active' : ''}`}
                             onClick={toggleScreenShare}
-                            title={isScreenSharing ? "Stop Sharing" : "Share Screen"}
                         >
                             <FaDesktop />
                         </button>
 
-                        <button className="control-btn end-btn" onClick={handleEndSession} title="End Session">
+                        <button className="control-btn end-btn" onClick={handleExit}>
                             <FaPhoneSlash />
                         </button>
                     </div>
 
                     <div className="utility-controls">
-                        <button className="icon-btn"><FaExpand /></button>
+                        <button className="icon-btn" onClick={() => document.documentElement.requestFullscreen()}><FaExpand /></button>
                     </div>
                 </div>
             </div>
