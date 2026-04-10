@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     FaVideo, FaVideoSlash, FaMicrophone, FaMicrophoneSlash,
-    FaPhoneSlash, FaExpand, FaDesktop
+    FaPhoneSlash, FaExpand, FaDesktop, FaUsers, FaRegCommentDots
 } from 'react-icons/fa';
 import './LiveRoom.css';
 
@@ -10,12 +10,19 @@ export default function LiveRoom() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
 
-    // Sidebars are removed as per user request
+    // Check if the user is a mentor
+    const isMentor = new URLSearchParams(window.location.search).get('mode') === 'mentor';
+
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [isMicOn, setIsMicOn] = useState(true);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [audioLevel, setAudioLevel] = useState(0);
     const [sessionData, setSessionData] = useState(null);
+    const [participants, setParticipants] = useState([
+        { name: isMentor ? "Academy Mentor (You)" : "Academy Mentor", role: "Instructor", isMe: isMentor },
+        { name: "Rahul V.", role: "Student" },
+        { name: "Priya K.", role: "Student" },
+    ]);
 
     const videoRef = useRef(null);
     const streamRef = useRef(null);
@@ -125,7 +132,7 @@ export default function LiveRoom() {
     };
 
     return (
-        <div className="live-room-page full-screen">
+        <div className={`live-room-page ${isMentor ? 'with-sidebar' : 'full-screen'}`}>
             <div className="room-container">
                 <div className="video-viewport">
                     <div className={`video-placeholder ${!isCameraOn && !isScreenSharing ? 'dark' : ''}`}>
@@ -155,6 +162,35 @@ export default function LiveRoom() {
                     </div>
                 </div>
 
+                {/* Conditional Sidebar for Mentor Only */}
+                {isMentor && (
+                    <div className="room-sidebar">
+                        <div className="sidebar-header">
+                            <h3><FaUsers /> Participants ({participants.length})</h3>
+                        </div>
+                        <div className="participant-list">
+                            {participants.map((p, idx) => (
+                                <div key={idx} className="participant-item">
+                                    <div className="p-avatar">{p.name[0]}</div>
+                                    <div className="p-info">
+                                        <span className="p-name">{p.name}</span>
+                                        <span className="p-role">{p.role}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="chat-mini-section">
+                            <div className="sidebar-header">
+                                <h3><FaRegCommentDots /> Live Chat</h3>
+                            </div>
+                            <div className="chat-placeholder">
+                                <p>Chat is enabled during the session.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="controls-bar">
                     <div className="room-info-mini">
                         <strong>{sessionData?.subject || "Academy"}</strong>
@@ -162,37 +198,47 @@ export default function LiveRoom() {
                     </div>
 
                     <div className="central-controls">
-                        <div className="mic-control-wrapper">
-                            <button
-                                className={`control-btn ${!isMicOn ? 'off' : ''}`}
-                                onClick={() => setIsMicOn(!isMicOn)}
-                                title={isMicOn ? "Mute" : "Unmute"}
-                            >
-                                {isMicOn ? <FaMicrophone /> : <FaMicrophoneSlash />}
-                            </button>
-                            {isMicOn && (
-                                <div className="audio-meter">
-                                    <div className="audio-bar" style={{ height: `${Math.min(100, audioLevel * 1.5)}%` }}></div>
+                        {isMentor && (
+                            <>
+                                <div className="mic-control-wrapper">
+                                    <button
+                                        className={`control-btn ${!isMicOn ? 'off' : ''}`}
+                                        onClick={() => setIsMicOn(!isMicOn)}
+                                        title={isMicOn ? "Mute" : "Unmute"}
+                                    >
+                                        {isMicOn ? <FaMicrophone /> : <FaMicrophoneSlash />}
+                                    </button>
+                                    {isMicOn && (
+                                        <div className="audio-meter">
+                                            <div className="audio-bar" style={{ height: `${Math.min(100, audioLevel * 1.5)}%` }}></div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+
+                                <button
+                                    className={`control-btn ${!isCameraOn ? 'off' : ''}`}
+                                    onClick={() => setIsCameraOn(!isCameraOn)}
+                                    disabled={isScreenSharing}
+                                    title={isCameraOn ? "Stop Video" : "Start Video"}
+                                >
+                                    {isCameraOn ? <FaVideo /> : <FaVideoSlash />}
+                                </button>
+
+                                <button
+                                    className={`control-btn share-btn ${isScreenSharing ? 'active' : ''}`}
+                                    onClick={toggleScreenShare}
+                                    title={isScreenSharing ? "Stop Sharing" : "Share Screen"}
+                                >
+                                    <FaDesktop />
+                                </button>
+                            </>
+                        )}
 
                         <button
-                            className={`control-btn ${!isCameraOn ? 'off' : ''}`}
-                            onClick={() => setIsCameraOn(!isCameraOn)}
-                            disabled={isScreenSharing}
+                            className={`control-btn end-btn ${!isMentor ? 'student-leave' : ''}`}
+                            onClick={handleExit}
+                            title={isMentor ? "End Class" : "Leave Class"}
                         >
-                            {isCameraOn ? <FaVideo /> : <FaVideoSlash />}
-                        </button>
-
-                        <button
-                            className={`control-btn share-btn ${isScreenSharing ? 'active' : ''}`}
-                            onClick={toggleScreenShare}
-                        >
-                            <FaDesktop />
-                        </button>
-
-                        <button className="control-btn end-btn" onClick={handleExit}>
                             <FaPhoneSlash />
                         </button>
                     </div>
