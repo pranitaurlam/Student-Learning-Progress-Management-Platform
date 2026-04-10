@@ -136,9 +136,20 @@
 
 .class-title {
     font-size: 1.4rem;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
     font-weight: 700;
     line-height: 1.4;
+}
+
+.class-subject-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(14, 165, 233, 0.1);
+    color: #0ea5e9;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 20px;
 }
 
 .class-info {

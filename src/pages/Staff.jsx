@@ -145,7 +145,18 @@ export default function Staff() {
     };
 
     /* ── Timetable ── */
-    const [timetable, setTimetable] = useState(initTimetable);
+    const TT_STORAGE_KEY = 'mindforge_timetable';
+    const [timetable, setTimetable] = useState(() => {
+        try {
+            const stored = localStorage.getItem(TT_STORAGE_KEY);
+            return stored ? JSON.parse(stored) : initTimetable;
+        } catch { return initTimetable; }
+    });
+
+    useEffect(() => {
+        localStorage.setItem(TT_STORAGE_KEY, JSON.stringify(timetable));
+    }, [timetable]);
+
     const [ttForm, setTtForm] = useState({ time: '', subject: '', topic: '' });
     const [ttEdit, setTtEdit] = useState(null);
 
