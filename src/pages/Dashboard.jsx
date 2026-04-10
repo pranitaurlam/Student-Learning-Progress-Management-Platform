@@ -262,25 +262,30 @@ export default function Dashboard() {
             const stored = localStorage.getItem('mindforge_timetable');
             if (stored) setTimetable(JSON.parse(stored));
         };
-        loadTt();
-        const interval = setInterval(loadTt, 5000);
-
-        // Load Recordings
-        const request = indexedDB.open('mindforge_db', 1);
-        request.onsuccess = e => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('recordings')) return;
-            const tx = db.transaction('recordings', 'readonly');
-            const store = tx.objectStore('recordings');
-            const getReq = store.getAll();
-            getReq.onsuccess = () => {
-                // sort by newest first
-                const recs = (getReq.result || []).sort((a, b) => b.id - a.id);
-                // Create ObjectURLs directly
-                const mappedRecs = recs.map(r => ({ ...r, videoUrl: URL.createObjectURL(r.blob) }));
-                setRecordings(mappedRecs);
+        const loadRecordings = () => {
+            const request = indexedDB.open('mindforge_db', 1);
+            request.onsuccess = e => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('recordings')) return;
+                const tx = db.transaction('recordings', 'readonly');
+                const store = tx.objectStore('recordings');
+                const getReq = store.getAll();
+                getReq.onsuccess = () => {
+                    // sort by newest first
+                    const recs = (getReq.result || []).sort((a, b) => b.id - a.id);
+                    // Create ObjectURLs directly
+                    const mappedRecs = recs.map(r => ({ ...r, videoUrl: URL.createObjectURL(r.blob) }));
+                    setRecordings(mappedRecs);
+                };
             };
         };
+
+        loadTt();
+        loadRecordings();
+        const interval = setInterval(() => {
+            loadTt();
+            loadRecordings();
+        }, 5000);
 
         return () => clearInterval(interval);
     }, []);
