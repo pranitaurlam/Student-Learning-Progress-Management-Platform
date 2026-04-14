@@ -58,7 +58,6 @@ export default function Staff() {
     const [messagesState, setMessagesState] = useState([]);
     const [activeDoubtId, setActiveDoubtId] = useState(null);
     const [replyText, setReplyText] = useState('');
-    const [unlockedIds, setUnlockedIds] = useState([]);
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
@@ -102,18 +101,7 @@ export default function Staff() {
     const openDoubt = (id) => {
         const doubt = messagesState.find(m => m.id === id);
         if (!doubt) return;
-
-        // Password check: Name + 123 (excluding "Prof. ")
-        if (!unlockedIds.includes(id)) {
-            const pass = prompt(`Enter password to unlock ${doubt.sender}'s chat:`);
-            const cleanName = doubt.sender.replace(/^Prof\.\s*/, '');
-            const expected = `${cleanName}123`;
-            if (pass !== expected) {
-                alert("Incorrect password!");
-                return;
-            }
-            setUnlockedIds([...unlockedIds, id]);
-        }
+        // Remove password prompt entirely so it just works
 
         setActiveDoubtId(id);
         setReplyText('');
@@ -859,13 +847,12 @@ export default function Staff() {
                                             className={`message-item ${m.unreadStatus?.staff ? 'unread' : ''} ${activeDoubtId === m.id ? 'active' : ''}`}
                                             onClick={() => openDoubt(m.id)}
                                         >
-                                            <div className={`message-avatar ${m.color}`}>{m.initials}</div>
+                                            <div className={`message-avatar ${m.color}`}>{m.studentInitials || 'ST'}</div>
                                             <div className="message-info">
                                                 <div className="message-header">
-                                                    <span className="message-sender">{m.sender}</span>
+                                                    <span className="message-sender">{m.studentName || 'Student'} <span style={{ fontSize: '0.7em', color: 'gray' }}>to {m.sender}</span></span>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                                         <span className="message-time">{m.time}</span>
-                                                        {!unlockedIds.includes(m.id) && <FaLock size={12} style={{ color: '#9ca3af' }} />}
                                                     </div>
                                                 </div>
                                                 <span className="message-subject">{m.subject}</span>
@@ -887,8 +874,8 @@ export default function Staff() {
                                         <div className="chat-header">
                                             <button className="back-btn" onClick={() => setActiveDoubtId(null)}><IoArrowBack /></button>
                                             <div className="chat-header-info">
-                                                <span className="chat-name">{activeDoubt.sender}</span>
-                                                <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>Replying as {activeDoubt.subject} Mentor</span>
+                                                <span className="chat-name">{activeDoubt.studentName || 'Student Chat'}</span>
+                                                <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>You ({activeDoubt.sender}) replying to student</span>
                                             </div>
                                         </div>
                                         <div className="chat-messages">
@@ -905,7 +892,7 @@ export default function Staff() {
                                         <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '16px 24px', flexShrink: 0 }}>
                                             <textarea
                                                 className="chat-input"
-                                                placeholder={`Type your reply to ${activeDoubt.sender}...`}
+                                                placeholder={`Type your reply to ${activeDoubt.studentName || 'this student'}...`}
                                                 value={replyText}
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 onKeyDown={handleReplyKeyDown}
