@@ -16,6 +16,7 @@ import LiveClass from "./pages/LiveClass";
 import LiveRoom from "./pages/LiveRoom";
 import Certificates from './pages/Certificates';
 import Staff from './pages/Staff';
+import AttendanceForm from './pages/AttendanceForm';
 import './index.css';
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/live-room/:sessionId" element={<LiveRoom />} />
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/staff" element={<Staff />} />
+        <Route path="/attendance" element={<AttendanceForm />} />
       </Routes>
     </BrowserRouter>
   );

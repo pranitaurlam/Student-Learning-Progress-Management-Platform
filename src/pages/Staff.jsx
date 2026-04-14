@@ -305,7 +305,11 @@ export default function Staff() {
 
     const generateQR = () => {
         clearInterval(timerRef.current);
-        const token = `mindforge-attendance-${attSession.subject || 'All'}-${attSession.label || 'General'}-${Date.now()}`;
+        const baseUrl = window.location.origin;
+        const sessionId = `sess-${Date.now()}`;
+        const query = `?subject=${encodeURIComponent(attSession.subject || 'General')}&label=${encodeURIComponent(attSession.label || 'General')}&session=${sessionId}`;
+        const token = `${baseUrl}/attendance${query}`;
+
         setQrValue(token);
         setCountdown(QR_DURATION);
         const expiry = Date.now() + QR_DURATION * 1000;
@@ -330,14 +334,29 @@ export default function Staff() {
         return () => clearInterval(timerRef.current);
     }, [activeTab, attSession.subject]); // only regenerate on subject change or tab enter, not every keystroke
 
+    // Listen for real student scans from AttendanceForm.jsx
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const submissions = JSON.parse(localStorage.getItem('mindforge_attendance_submissions') || '[]');
+            if (submissions.length > 0) {
+                // Filter for current session/subject if needed, or just show all new ones
+                const newEntries = submissions.filter(s => !attLog.some(l => l.id === s.id));
+                if (newEntries.length > 0) {
+                    setAttLog(prev => [...newEntries, ...prev]);
+                }
+            }
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [attLog]);
+
     // Simulate a student scanning (demo button)
     const simulateScan = () => {
         if (!qrValue) return;
         const names = ['Riya S.', 'Arjun M.', 'Priya K.', 'Dev R.', 'Sneha T.', 'Rahul V.'];
         const name = names[Math.floor(Math.random() * names.length)];
-        const already = attLog.find(l => l.session === qrValue && l.name === name);
+        const already = attLog.find(l => l.name === name); // simplify for demo
         if (already) return;
-        setAttLog(prev => [{ id: Date.now(), name, session: qrValue, subject: attSession.subject, time: new Date().toLocaleTimeString() }, ...prev]);
+        setAttLog(prev => [{ id: Date.now(), name, subject: attSession.subject, time: new Date().toLocaleTimeString() }, ...prev]);
     };
 
     useEffect(() => () => clearInterval(timerRef.current), []);
