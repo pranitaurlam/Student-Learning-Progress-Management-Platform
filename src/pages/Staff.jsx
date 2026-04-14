@@ -869,7 +869,9 @@ export default function Staff() {
                                                     </div>
                                                 </div>
                                                 <span className="message-subject">{m.subject}</span>
-                                                <p className="message-preview">{m.preview}</p>
+                                                <p className="message-preview">
+                                                    {unlockedIds.includes(m.id) ? m.preview : "🔒 Message locked. Unlock to view contents."}
+                                                </p>
                                             </div>
                                             {m.unreadStatus?.staff && <div className="unread-badge" />}
                                         </div>
