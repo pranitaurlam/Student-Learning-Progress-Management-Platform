@@ -58,6 +58,7 @@ export default function Staff() {
     const [messagesState, setMessagesState] = useState([]);
     const [activeDoubtId, setActiveDoubtId] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const [unlockedIds, setUnlockedIds] = useState([]);
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
@@ -101,7 +102,18 @@ export default function Staff() {
     const openDoubt = (id) => {
         const doubt = messagesState.find(m => m.id === id);
         if (!doubt) return;
-        // Remove password prompt entirely so it just works
+
+        // Password check: Name + 123 (excluding "Prof. ")
+        if (!unlockedIds.includes(id)) {
+            const pass = prompt(`Enter password to unlock ${doubt.sender}'s chat:`);
+            const cleanName = doubt.sender.replace(/^Prof\.\s*/, '');
+            const expected = `${cleanName}123`;
+            if (pass !== expected) {
+                alert("Incorrect password!");
+                return;
+            }
+            setUnlockedIds([...unlockedIds, id]);
+        }
 
         setActiveDoubtId(id);
         setReplyText('');
@@ -853,6 +865,7 @@ export default function Staff() {
                                                     <span className="message-sender">{m.studentName || 'Student'} <span style={{ fontSize: '0.7em', color: 'gray' }}>to {m.sender}</span></span>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                                         <span className="message-time">{m.time}</span>
+                                                        {!unlockedIds.includes(m.id) && <FaLock size={12} style={{ color: '#9ca3af' }} />}
                                                     </div>
                                                 </div>
                                                 <span className="message-subject">{m.subject}</span>
