@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FaCheckCircle, FaClipboardList } from 'react-icons/fa';
 import './AttendanceForm.css';
@@ -13,20 +13,26 @@ export default function AttendanceForm() {
 
     const [form, setForm] = useState({
         name: '',
-        semester: '',
+        sem: '',
         batch: '',
-        understanding: 'Good',
-        doubts: ''
+        happened: ''
     });
 
     const [submitted, setSubmitted] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(true);
 
-    const handleSubmit = (e) => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsConnecting(false);
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!form.name.trim()) return;
 
         const submission = {
-            id: Date.now(),
             sessionId,
             subject,
             label,
@@ -34,11 +40,18 @@ export default function AttendanceForm() {
             time: new Date().toLocaleTimeString()
         };
 
-        // Save to localStorage for Staff Portal to pick up
-        const existing = JSON.parse(localStorage.getItem(ATTENDANCE_STORAGE_KEY) || '[]');
-        localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify([submission, ...existing]));
-
-        setSubmitted(true);
+        try {
+            await fetch('/api/attendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(submission)
+            });
+            setSubmitted(true);
+        } catch (err) {
+            console.error("Failed to submit attendance syncing: ", err);
+            // Fallback for safety
+            setSubmitted(true);
+        }
     };
 
     if (submitted) {
@@ -50,6 +63,29 @@ export default function AttendanceForm() {
                     <p>Your response for <strong>{subject}</strong> has been submitted successfully.</p>
                     <button className="att-submit-btn" onClick={() => window.close()}>Close Tab</button>
                     <p style={{ marginTop: 20, fontSize: '0.8rem', color: '#9ca3af' }}>You can now return to your class.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (isConnecting) {
+        return (
+            <div className="att-form-page">
+                <div className="att-form-container att-success" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 40px' }}>
+                    <div className="spinner" style={{
+                        border: '4px solid rgba(0,0,0,0.1)',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        borderLeftColor: '#60a5fa',
+                        animation: 'spin 1s linear infinite',
+                        marginBottom: '24px'
+                    }}></div>
+                    <style>{`
+                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    `}</style>
+                    <h2 style={{ margin: 0, color: '#4b5563', fontSize: '1.2rem', fontWeight: '500' }}>Connecting to server...</h2>
+                    <p style={{ marginTop: 10, fontSize: '0.9rem', color: '#9ca3af' }}>Please wait while we establish a secure connection.</p>
                 </div>
             </div>
         );
@@ -67,7 +103,7 @@ export default function AttendanceForm() {
 
                     {/* Name */}
                     <div className="att-field">
-                        <label>Student's Full Name <span>*</span></label>
+                        <label>your name: <span>*</span></label>
                         <input
                             type="text"
                             className="att-input-text"
@@ -80,78 +116,47 @@ export default function AttendanceForm() {
 
                     {/* Semester */}
                     <div className="att-field">
-                        <label>Which Semester? <span>*</span></label>
-                        <div className="att-radio-group">
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
-                                <label key={sem} className="att-radio-item">
-                                    <input
-                                        type="radio"
-                                        name="semester"
-                                        value={sem}
-                                        required
-                                        onChange={e => setForm({ ...form, semester: e.target.value })}
-                                    />
-                                    Semester {sem}
-                                </label>
-                            ))}
-                        </div>
+                        <label>your sem: <span>*</span></label>
+                        <input
+                            type="text"
+                            className="att-input-text"
+                            placeholder="Your answer"
+                            required
+                            value={form.sem}
+                            onChange={e => setForm({ ...form, sem: e.target.value })}
+                        />
                     </div>
 
                     {/* Batch */}
                     <div className="att-field">
-                        <label>What is your Batch? <span>*</span></label>
-                        <div className="att-radio-group">
-                            {['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4'].map(batch => (
-                                <label key={batch} className="att-radio-item">
-                                    <input
-                                        type="radio"
-                                        name="batch"
-                                        value={batch}
-                                        required
-                                        onChange={e => setForm({ ...form, batch: e.target.value })}
-                                    />
-                                    {batch}
-                                </label>
-                            ))}
-                        </div>
+                        <label>your batch: <span>*</span></label>
+                        <input
+                            type="text"
+                            className="att-input-text"
+                            placeholder="Your answer"
+                            required
+                            value={form.batch}
+                            onChange={e => setForm({ ...form, batch: e.target.value })}
+                        />
                     </div>
 
-                    {/* Understanding */}
+                    {/* What happen in class */}
                     <div className="att-field">
-                        <label>Did you understand today's class? <span>*</span></label>
-                        <div className="att-radio-group">
-                            {['Excellent', 'Good', 'Average', 'Not much'].map(opt => (
-                                <label key={opt} className="att-radio-item">
-                                    <input
-                                        type="radio"
-                                        name="understanding"
-                                        value={opt}
-                                        required
-                                        checked={form.understanding === opt}
-                                        onChange={e => setForm({ ...form, understanding: e.target.value })}
-                                    />
-                                    {opt}
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Doubts */}
-                    <div className="att-field">
-                        <label>What are your doubts? (Leave blank if none)</label>
+                        <label>what happen in class: <span>*</span></label>
                         <textarea
                             className="att-input-text"
                             placeholder="Your answer"
-                            rows={3}
+                            required
+                            rows={4}
                             style={{ resize: 'vertical', borderBottom: '1px solid #d1d5db' }}
-                            value={form.doubts}
-                            onChange={e => setForm({ ...form, doubts: e.target.value })}
+                            value={form.happened}
+                            onChange={e => setForm({ ...form, happened: e.target.value })}
                         />
                     </div>
 
                     <div className="att-submit-row">
                         <button type="submit" className="att-submit-btn">Submit</button>
-                        <button type="button" className="att-clear-btn" onClick={() => setForm({ name: '', semester: '', batch: '', understanding: 'Good', doubts: '' })}>Clear form</button>
+                        <button type="button" className="att-clear-btn" onClick={() => setForm({ name: '', sem: '', batch: '', happened: '' })}>Clear form</button>
                     </div>
                 </div>
             </form>

@@ -297,6 +297,7 @@ export default function Staff() {
     /* ── Attendance ── */
     const [attSession, setAttSession] = useState({ subject: '', label: '' });
     const [qrValue, setQrValue] = useState('');
+    const [hostIp, setHostIp] = useState('10.20.16.52'); // Default to current known network IP
     const [qrExpiry, setQrExpiry] = useState(null);
     const [countdown, setCountdown] = useState(0);
     const [attLog, setAttLog] = useState([]);
@@ -305,7 +306,11 @@ export default function Staff() {
 
     const generateQR = () => {
         clearInterval(timerRef.current);
-        const baseUrl = window.location.origin;
+        let baseUrl = window.location.origin;
+        if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+            baseUrl = baseUrl.replace('localhost', hostIp).replace('127.0.0.1', hostIp);
+        }
+
         const sessionId = `sess-${Date.now()}`;
         const query = `?subject=${encodeURIComponent(attSession.subject || 'General')}&label=${encodeURIComponent(attSession.label || 'General')}&session=${sessionId}`;
         const token = `${baseUrl}/attendance${query}`;
@@ -334,16 +339,22 @@ export default function Staff() {
         return () => clearInterval(timerRef.current);
     }, [activeTab, attSession.subject]); // only regenerate on subject change or tab enter, not every keystroke
 
-    // Listen for real student scans from AttendanceForm.jsx
+    // Listen for real student scans from other devices
     useEffect(() => {
-        const interval = setInterval(() => {
-            const submissions = JSON.parse(localStorage.getItem('mindforge_attendance_submissions') || '[]');
-            if (submissions.length > 0) {
-                // Filter for current session/subject if needed, or just show all new ones
-                const newEntries = submissions.filter(s => !attLog.some(l => l.id === s.id));
-                if (newEntries.length > 0) {
-                    setAttLog(prev => [...newEntries, ...prev]);
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch('/api/attendance');
+                if (res.ok) {
+                    const submissions = await res.json();
+                    if (submissions.length > 0) {
+                        const newEntries = submissions.filter(s => !attLog.some(l => l.id === s.id));
+                        if (newEntries.length > 0) {
+                            setAttLog(prev => [...newEntries, ...prev]);
+                        }
+                    }
                 }
+            } catch (e) {
+                console.error("Sync error", e);
             }
         }, 2000);
         return () => clearInterval(interval);
@@ -971,6 +982,19 @@ export default function Staff() {
                                             onChange={e => setAttSession(p => ({ ...p, label: e.target.value }))}
                                             onBlur={generateQR} // regenerate on blur
                                         />
+                                    </div>
+                                    <div className="form-field form-field-full" style={{ width: '100%', marginTop: 10 }}>
+                                        <label style={{ color: '#ec4899' }}>Network IP for QR (Important for mobile users!)</label>
+                                        <input
+                                            placeholder="192.168.x.x"
+                                            value={hostIp}
+                                            onChange={e => setHostIp(e.target.value)}
+                                            onBlur={generateQR}
+                                            style={{ borderColor: '#fbcfe8' }}
+                                        />
+                                        <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: 4 }}>
+                                            If you opened localhost on your PC but are scanning from a phone, set this to your PC's Wi-Fi IP so the phone can connect.
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="qr-display-area">
