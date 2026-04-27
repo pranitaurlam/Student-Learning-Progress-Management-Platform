@@ -12,6 +12,9 @@ import MockTestRunner from './pages/MockTestRunner';
 import PracticeQuestions from './pages/PracticeQuestions';
 import QuestionDetail from './pages/QuestionDetail';
 import Planner from './pages/Planner';
+import StudyRoom from './pages/StudyRoom';
+import Certificates from './pages/Certificates';
+import Staff from './pages/Staff';
 import './index.css';
 import Register from './pages/Register'; 
 
@@ -33,6 +36,9 @@ export default function App() {
         <Route path="/practice-questions/:subjectId/:questionId" element={<QuestionDetail />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/register" element={<Register />} />  
+        <Route path="/study-room" element={<StudyRoom />} />
+        <Route path="/certificates" element={<Certificates />} />
+        <Route path="/staff" element={<Staff />} />
       </Routes>
     </BrowserRouter>
   );

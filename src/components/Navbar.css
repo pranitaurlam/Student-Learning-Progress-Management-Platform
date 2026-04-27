@@ -115,12 +115,62 @@
     box-shadow: 0 6px 20px rgba(236, 72, 153, 0.35);
 }
 
+.navbar-staff-btn {
+    background-color: #1e293b;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-left: 10px;
+}
+
+.navbar-staff-btn:hover {
+    background-color: #0f172a;
+}
+
+.staff-badge {
+    color: #f472b6;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 4px 12px;
+    border: 1px solid #f472b6;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.navbar-staff-btn.logout {
+    background-color: #ef4444;
+}
+
+.navbar-staff-btn.logout:hover {
+    background-color: #dc2626;
+}
+
 /* Mobile */
 .navbar-toggle {
     display: none;
     background: none;
     color: white;
     font-size: 1.5rem;
+}
+
+@media (max-width: 800px) {
+    .navbar-toggle {
+        display: block;
+    }
+
+    .navbar-staff-btn {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+        text-align: center;
+    }
 }
 
 @media (max-width: 768px) {
