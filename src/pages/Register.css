@@ -1,0 +1,262 @@
+/* =====================
+   Register Page
+   ===================== */
+
+.register-page {
+    min-height: 100vh;
+    background: #0f0a1e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Purple/pink ambient blobs — same as your hero */
+.reg-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.reg-blob-1 {
+    width: 500px;
+    height: 500px;
+    background: #7c3aed;
+    top: -120px;
+    left: -150px;
+}
+
+.reg-blob-2 {
+    width: 400px;
+    height: 400px;
+    background: #ec4899;
+    bottom: -100px;
+    right: -100px;
+}
+
+/* =====================
+   Card
+   ===================== */
+.register-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* =====================
+   Brand
+   ===================== */
+.reg-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.reg-brand-icon {
+    font-size: 1.5rem;
+    color: #ec4899;
+}
+
+.reg-brand-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ec4899;
+    letter-spacing: 0.3px;
+}
+
+/* =====================
+   Header
+   ===================== */
+.reg-header {
+    margin-bottom: 28px;
+}
+
+.reg-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    line-height: 1.2;
+}
+
+.reg-subtitle {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+}
+
+/* =====================
+   Form Fields
+   ===================== */
+.reg-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.reg-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.reg-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+    letter-spacing: 0.2px;
+}
+
+.reg-field input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    color: #ffffff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.reg-field input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.reg-field input:focus {
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+}
+
+/* Password input wrapper */
+.reg-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.reg-input-wrap input {
+    padding-right: 44px;
+}
+
+.reg-eye {
+    position: absolute;
+    right: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.reg-eye:hover {
+    color: #ec4899;
+}
+
+/* =====================
+   Primary Button
+   ===================== */
+.reg-btn-primary {
+    margin-top: 6px;
+    background: linear-gradient(135deg, #ec4899, #a855f7);
+    border: none;
+    border-radius: 10px;
+    padding: 13px 20px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.reg-btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.reg-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* =====================
+   Divider
+   ===================== */
+.reg-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 16px;
+}
+
+.reg-divider span {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.reg-divider p {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* =====================
+   Secondary Button (Sign In)
+   ===================== */
+.reg-btn-secondary {
+    display: block;
+    text-align: center;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.reg-btn-secondary:hover {
+    border-color: #ec4899;
+    background: rgba(236, 72, 153, 0.08);
+    color: #ec4899;
+}
+
+/* =====================
+   Responsive
+   ===================== */
+@media (max-width: 500px) {
+    .register-card {
+        padding: 32px 22px;
+    }
+
+    .reg-title {
+        font-size: 1.5rem;
+    }
+}

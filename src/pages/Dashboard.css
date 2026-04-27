@@ -615,3 +615,100 @@
         text-align: center;
     }
 }
+.gamification-box {
+  position: relative;
+  overflow: hidden;
+}
+
+.gamification-box::before {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.35), transparent 70%);
+  top: -50px;
+  right: -40px;
+  animation: pulseGlow 2s infinite alternate;
+}
+
+.level-badge {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  margin-bottom: 14px;
+  box-shadow: 0 0 25px rgba(236, 72, 153, 0.5);
+  animation: floatBadge 2.5s ease-in-out infinite;
+}
+
+.xp-bar {
+  margin-top: 14px;
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.xp-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #ec4899, #facc15);
+  border-radius: 20px;
+  transition: width 0.4s ease;
+}
+
+.gamification-bottom {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.achievement-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px;
+  text-align: center;
+}
+
+.achievement-card span {
+  font-size: 24px;
+}
+
+.gamification-content {
+  width: 100%;
+}
+
+.achievement-card p {
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+@keyframes floatBadge {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGlow {
+  from {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1.1);
+  }
+}
