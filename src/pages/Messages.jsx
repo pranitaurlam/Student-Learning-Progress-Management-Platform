@@ -8,43 +8,49 @@ const initialConversations = [
         id: 1,
         type: 'mentor',
         sender: 'Prof. Rohit Gupta',
+        studentName: 'Riya Singh',
+        studentInitials: 'RS',
         initials: 'RG',
         color: 'purple',
         subject: 'DBMS',
         time: '2 hours ago',
         preview: 'Keep up the good work and aim for good marks in mock tests!',
-        unread: true,
+        unreadStatus: { student: true, staff: false },
         messages: [
-            { from: 'them', text: 'Hi! I checked your recent mock test results.', time: '10:00 AM' },
-            { from: 'them', text: 'Keep up the good work and aim for good marks in mock tests!', time: '10:02 AM' },
+            { from: 'mentor', text: 'Hi! I checked your recent mock test results.', time: '10:00 AM' },
+            { from: 'mentor', text: 'Keep up the good work and aim for good marks in mock tests!', time: '10:02 AM' },
         ],
     },
     {
         id: 2,
         type: 'mentor',
         sender: 'Prof. DivyaShant',
+        studentName: 'Arjun Mehta',
+        studentInitials: 'AM',
         initials: 'DS',
         color: 'magenta',
         subject: 'Frontend – Batch 1',
         time: '5 hours ago',
         preview: 'Please submit your frontend assignment by end of this week.',
-        unread: true,
+        unreadStatus: { student: true, staff: false },
         messages: [
-            { from: 'them', text: 'Please submit your frontend assignment by end of this week.', time: '7:30 AM' },
+            { from: 'mentor', text: 'Please submit your frontend assignment by end of this week.', time: '7:30 AM' },
         ],
     },
     {
         id: 3,
         type: 'mentor',
         sender: 'Prof. JayaPrasad',
+        studentName: 'Priya Kumar',
+        studentInitials: 'PK',
         initials: 'JP',
         color: 'cyan',
         subject: 'DSA – Batch 3',
         time: 'Yesterday',
-        preview: 'New mock test series for JEE 2026 is now available! Check it out.',
-        unread: false,
+        preview: 'Please send the links for the DSA doubt questions.',
+        unreadStatus: { student: false, staff: false },
         messages: [
-            { from: 'them', text: 'New mock test series for JEE 2026 is now available! Check it out.', time: 'Yesterday' },
+            { from: 'mentor', text: 'Please send the links for the DSA doubt questions.', time: 'Yesterday' },
         ],
     },
     {
@@ -56,9 +62,9 @@ const initialConversations = [
         subject: 'DSA – Batch 1',
         time: '2 days ago',
         preview: 'I reviewed your doubt — here is a step-by-step solution for Q12.',
-        unread: false,
+        unreadStatus: { student: false, staff: false },
         messages: [
-            { from: 'them', text: 'I reviewed your doubt — here is a step-by-step solution for Q12.', time: '2 days ago' },
+            { from: 'mentor', text: 'I reviewed your doubt — here is a step-by-step solution for Q12.', time: '2 days ago' },
         ],
     },
     {
@@ -70,9 +76,9 @@ const initialConversations = [
         subject: 'DSA – Batch 2',
         time: '3 days ago',
         preview: "DSA revision session tonight at 8 PM. Don't miss it!",
-        unread: false,
+        unreadStatus: { student: false, staff: false },
         messages: [
-            { from: 'them', text: "DSA revision session tonight at 8 PM. Don't miss it!", time: '3 days ago' },
+            { from: 'mentor', text: "DSA revision session tonight at 8 PM. Don't miss it!", time: '3 days ago' },
         ],
     },
     {
@@ -84,9 +90,9 @@ const initialConversations = [
         subject: 'ML',
         time: '4 days ago',
         preview: 'Great effort this week! Keep pushing forward in your studies.',
-        unread: false,
+        unreadStatus: { student: false, staff: false },
         messages: [
-            { from: 'them', text: 'Great effort this week! Keep pushing forward in your studies.', time: '4 days ago' },
+            { from: 'mentor', text: 'Great effort this week! Keep pushing forward in your studies.', time: '4 days ago' },
         ],
     },
     {
@@ -98,9 +104,9 @@ const initialConversations = [
         subject: 'Frontend – Batch 2',
         time: '5 days ago',
         preview: 'Assignment 3 has been uploaded. Please complete it before Friday.',
-        unread: false,
+        unreadStatus: { student: false, staff: false },
         messages: [
-            { from: 'them', text: 'Assignment 3 has been uploaded. Please complete it before Friday.', time: '5 days ago' },
+            { from: 'mentor', text: 'Assignment 3 has been uploaded. Please complete it before Friday.', time: '5 days ago' },
         ],
     },
     {
@@ -112,21 +118,79 @@ const initialConversations = [
         subject: 'Frontend – Batch 3',
         time: '6 days ago',
         preview: "Great work on the React project! Let's discuss improvements next session.",
-        unread: false,
+        unreadStatus: { student: false, staff: false },
         messages: [
-            { from: 'them', text: "Great work on the React project! Let's discuss improvements next session.", time: '6 days ago' },
+            { from: 'mentor', text: "Great work on the React project! Let's discuss improvements next session.", time: '6 days ago' },
         ],
     },
 ];
 
+/* ── LocalStorage Sync ── */
+const STORAGE_KEY = 'mindforge_messages';
+
+// Initialize or load from local storage
+const loadConversations = () => {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            let data = JSON.parse(stored);
+            // MIGRATION: Replace old placeholder text if it exists in storage
+            let changed = false;
+            data = data.map(conv => {
+                const hasOldText = conv.messages.some(m => m.text.includes("JEE 2026"));
+                if (hasOldText) {
+                    changed = true;
+                    return {
+                        ...conv,
+                        preview: "Please send the links for the DSA doubt questions.",
+                        messages: conv.messages.map(m =>
+                            m.text.includes("JEE 2026")
+                                ? { ...m, text: "Please send the links for the DSA doubt questions." }
+                                : m
+                        )
+                    };
+                }
+                return conv;
+            });
+            if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            return data;
+        }
+    } catch (e) {
+        console.error("Failed to load messages", e);
+    }
+    // Fallback to initial if empty
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialConversations));
+    return initialConversations;
+};
+
 export default function Messages() {
-    const [conversations, setConversations] = useState(initialConversations);
+    const [conversations, setConversations] = useState(loadConversations());
     const [activeId, setActiveId] = useState(null);
     const [inputText, setInputText] = useState('');
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
 
     const activeConv = conversations.find((c) => c.id === activeId);
+
+    // Sync state changes to localStorage
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+    }, [conversations]);
+
+    // Periodically poll for updates from Staff replies
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                // Simple equality check to avoid unnecessary re-renders
+                if (JSON.stringify(parsed) !== JSON.stringify(conversations)) {
+                    setConversations(parsed);
+                }
+            }
+        }, 2000); // Check every 2s
+        return () => clearInterval(interval);
+    }, [conversations]);
 
     useEffect(() => {
         if (messagesEndRef.current) {
@@ -137,9 +201,9 @@ export default function Messages() {
     const openConversation = (id) => {
         setActiveId(id);
         setInputText('');
-        // mark as read
+        // mark as read for student view
         setConversations((prev) =>
-            prev.map((c) => (c.id === id ? { ...c, unread: false } : c))
+            prev.map((c) => (c.id === id ? { ...c, unreadStatus: { ...c.unreadStatus, student: false } } : c))
         );
     };
 
@@ -157,7 +221,9 @@ export default function Messages() {
                         ...c,
                         preview: text,
                         time: 'Just now',
-                        messages: [...c.messages, { from: 'me', text, time: timeStr }],
+                        // mark unread for staff
+                        unreadStatus: { ...c.unreadStatus, staff: true },
+                        messages: [...c.messages, { from: 'student', text, time: timeStr }],
                     }
                     : c
             )
@@ -186,7 +252,7 @@ export default function Messages() {
                         {conversations.map((m) => (
                             <div
                                 key={m.id}
-                                className={`message-item ${m.unread ? 'unread' : ''} ${activeId === m.id ? 'active' : ''}`}
+                                className={`message-item ${m.unreadStatus?.student ? 'unread' : ''} ${activeId === m.id ? 'active' : ''}`}
                                 onClick={() => openConversation(m.id)}
                             >
                                 <div className={`message-avatar ${m.color}`}>{m.initials}</div>
@@ -198,7 +264,7 @@ export default function Messages() {
                                     <span className="message-subject">{m.subject}</span>
                                     <p className="message-preview">{m.preview}</p>
                                 </div>
-                                {m.unread && <div className="unread-badge" />}
+                                {m.unreadStatus?.student && <div className="unread-badge" />}
                             </div>
                         ))}
                     </div>
@@ -229,8 +295,8 @@ export default function Messages() {
                             {/* Chat Messages */}
                             <div className="chat-messages">
                                 {activeConv.messages.map((msg, i) => (
-                                    <div key={i} className={`chat-bubble-wrap ${msg.from === 'me' ? 'me' : 'them'}`}>
-                                        {msg.from === 'them' && (
+                                    <div key={i} className={`chat-bubble-wrap ${msg.from === 'student' ? 'me' : 'them'}`}>
+                                        {msg.from === 'mentor' && (
                                             <div className={`bubble-avatar ${activeConv.color}`}>{activeConv.initials}</div>
                                         )}
                                         <div className="chat-bubble">

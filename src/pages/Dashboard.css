@@ -237,10 +237,6 @@
     backdrop-filter: blur(12px);
 }
 
-.action-card.mock-test {
-    cursor: pointer;
-}
-
 .action-card:hover {
     transform: translateY(-4px);
     border-color: rgba(139, 92, 246, 0.5);
@@ -269,6 +265,28 @@
     pointer-events: none;
 }
 
+.action-card.live-class::before {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.action-card.certificates::before {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
 .action-icon-wrapper {
     width: 60px;
     height: 60px;
@@ -287,6 +305,16 @@
 .practice .action-icon-wrapper {
     background: rgba(236, 72, 153, 0.1);
     color: #f472b6;
+}
+
+.live-class .action-icon-wrapper {
+    background: rgba(14, 165, 233, 0.1);
+    color: #0ea5e9;
+}
+
+.certificates .action-icon-wrapper {
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
 }
 
 .action-icon {
@@ -332,6 +360,18 @@
     border: 1px solid rgba(236, 72, 153, 0.3);
 }
 
+.live-class .action-btn {
+    background: rgba(14, 165, 233, 0.15);
+    color: #0ea5e9;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.certificates .action-btn {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
 .action-card:hover .action-btn {
     transform: translateX(4px);
 }
@@ -344,6 +384,16 @@
 .practice:hover .action-btn {
     background: rgba(236, 72, 153, 0.25);
     border-color: rgba(236, 72, 153, 0.6);
+}
+
+.live-class:hover .action-btn {
+    background: rgba(14, 165, 233, 0.25);
+    border-color: rgba(14, 165, 233, 0.6);
+}
+
+.certificates:hover .action-btn {
+    background: rgba(251, 191, 36, 0.25);
+    border-color: rgba(251, 191, 36, 0.6);
 }
 
 /* Performance Analytics */
