@@ -547,6 +547,75 @@
     }
 }
 
+/* Live Session Enhancements */
+.hero-side-card.is-live {
+    border-color: rgba(247, 185, 76, 0.4);
+    background: linear-gradient(180deg, rgba(20, 35, 58, 0.9), rgba(10, 25, 45, 0.95));
+    box-shadow: 0 0 25px rgba(247, 185, 76, 0.12);
+}
+
+.live-pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #f7b94c;
+    border-radius: 50%;
+    position: relative;
+    margin-left: 4px;
+}
+
+.live-pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.6;
+    animation: pulse-dot 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+@keyframes pulse-dot {
+    0% { transform: scale(0.5); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+.join-now-btn {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7b94c 0%, #f472b6 100%);
+    color: #0f1b2f;
+    border: none;
+    font-weight: 800;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(247, 185, 76, 0.2);
+}
+
+.join-now-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(247, 185, 76, 0.3);
+    filter: brightness(1.1);
+}
+
+.action-card.live-class.is-live {
+    border-color: rgba(247, 185, 76, 0.3);
+}
+
+.live-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 @media (max-width: 640px) {
     .dashboard-page {
         padding-top: 20px;

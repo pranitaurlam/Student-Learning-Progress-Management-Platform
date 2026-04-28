@@ -220,6 +220,7 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [streakData, setStreakData] = useState(getStreakData);
     const [analytics, setAnalytics] = useState(() => computeAnalytics(loadHistory()));
+    const [activeSession, setActiveSession] = useState(null);
     const [timetable, setTimetable] = useState([]);
     const [recordings, setRecordings] = useState([]);
     const [assignments, setAssignments] = useState([
@@ -266,11 +267,19 @@ export default function Dashboard() {
             }
         };
 
+        const loadActive = () => {
+            const stored = localStorage.getItem("mindforge_active_session");
+            if (stored) setActiveSession(JSON.parse(stored));
+            else setActiveSession(null);
+        };
+
         loadTt();
         loadRecordings();
+        loadActive();
         const interval = setInterval(() => {
             loadTt();
             loadRecordings();
+            loadActive();
         }, 5000);
 
         return () => clearInterval(interval);
@@ -388,12 +397,26 @@ export default function Dashboard() {
                             </button>
                         </div>
 
-                        <div className="hero-side-card">
+                        <div className={`hero-side-card ${activeSession ? "is-live" : ""}`}>
                             <div className="hero-side-header">
                                 <IoSchool />
-                                <span>Next up</span>
+                                <span>{activeSession ? "Live Now" : "Next up"}</span>
+                                {activeSession && <span className="live-pulse-dot"></span>}
                             </div>
-                            {nextSession ? (
+                            {activeSession ? (
+                                <>
+                                    <h3>{activeSession.subject}</h3>
+                                    <p>{activeSession.topic}</p>
+                                    <div className="hero-side-meta">
+                                        <button 
+                                            className="join-now-btn"
+                                            onClick={() => navigate(`/live-room/${activeSession.id}`)}
+                                        >
+                                            Join Live Class
+                                        </button>
+                                    </div>
+                                </>
+                            ) : nextSession ? (
                                 <>
                                     <h3>{nextSession.subject}</h3>
                                     <p>{nextSession.topic}</p>
@@ -505,7 +528,7 @@ export default function Dashboard() {
                         </div>
 
                         <div
-                            className="action-card live-class"
+                            className={`action-card live-class ${activeSession ? "is-live" : ""}`}
                             onClick={() => navigate("/live-class")}
                             role="button"
                             tabIndex={0}
@@ -515,10 +538,15 @@ export default function Dashboard() {
                         >
                             <div className="action-icon-wrapper">
                                 <FaVideo className="action-icon" />
+                                {activeSession && <span className="live-badge">LIVE</span>}
                             </div>
                             <div className="action-content">
                                 <h3>Live Class</h3>
-                                <p>Join the active room or check what is coming up next in the schedule.</p>
+                                <p>
+                                    {activeSession 
+                                        ? `Currently Live: ${activeSession.subject}` 
+                                        : "Join the active room or check what is coming up next in the schedule."}
+                                </p>
                                 <button
                                     type="button"
                                     className="action-btn"
@@ -527,7 +555,7 @@ export default function Dashboard() {
                                         navigate("/live-class");
                                     }}
                                 >
-                                    Join Class
+                                    {activeSession ? "Join Now" : "Join Class"}
                                 </button>
                             </div>
                         </div>
