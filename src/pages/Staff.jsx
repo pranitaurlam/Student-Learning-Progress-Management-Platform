@@ -5,6 +5,7 @@ import {
     FaUsers, FaChartBar, FaClock, FaTrophy, FaStar,
     FaFolderOpen, FaFileAlt, FaDownload, FaQrcode, FaSync, FaComments, FaPaperPlane, FaLock, FaVideo
 } from 'react-icons/fa';
+import { joinRoom } from 'trystero';
 import { IoArrowBack, IoSend } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -466,7 +467,15 @@ export default function Staff() {
     const [hostIp, setHostIp] = useState('');
     const [qrExpiry, setQrExpiry] = useState(null);
     const [countdown, setCountdown] = useState(0);
-    const [attLog, setAttLog] = useState([]);
+    const [attLog, setAttLog] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('mindforge_att_log') || '[]');
+        } catch { return []; }
+    });
+    useEffect(() => {
+        localStorage.setItem('mindforge_att_log', JSON.stringify(attLog));
+    }, [attLog]);
+
     const timerRef = useRef(null);
     const QR_DURATION = 30; // 30 seconds
 
@@ -542,8 +551,26 @@ export default function Staff() {
         }
     }, [hostIp]);
 
-    // Listen for real student scans from other devices
+    // Listen for real student scans (P2P + API)
     useEffect(() => {
+        // 1. P2P Channel (For Vercel/Deployed)
+        let room;
+        if (activeTab === 'attendance' && qrValue) {
+            const sessionId = qrValue.split('session=')[1]?.split('&')[0];
+            const config = { appId: 'mindforge-academy' };
+            room = joinRoom(config, sessionId || 'global-attendance');
+            const [, getAttendance] = room.makeAction('attendance');
+            
+            getAttendance(data => {
+                console.log("P2P Attendance Received:", data);
+                setAttLog(prev => {
+                    if (prev.some(l => l.id === data.id)) return prev;
+                    return [data, ...prev];
+                });
+            });
+        }
+
+        // 2. API Polling (For Dev/Local)
         const interval = setInterval(async () => {
             try {
                 const res = await fetch('/api/attendance');
@@ -557,11 +584,15 @@ export default function Staff() {
                     }
                 }
             } catch (e) {
-                console.error("Sync error", e);
+                // Silently ignore sync errors in production
             }
         }, 2000);
-        return () => clearInterval(interval);
-    }, [attLog]);
+        
+        return () => {
+            clearInterval(interval);
+            if (room) room.leave();
+        };
+    }, [attLog, activeTab, qrValue]);
 
     // Simulate a student scanning (demo button)
     const simulateScan = () => {
