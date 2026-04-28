@@ -551,16 +551,21 @@ export default function Staff() {
         }
     }, [hostIp]);
 
+    const [peerCount, setPeerCount] = useState(0);
+
     // Listen for real student scans (P2P + API)
     useEffect(() => {
         // 1. P2P Channel (For Vercel/Deployed)
         let room;
         if (activeTab === 'attendance' && qrValue) {
             const sessionId = qrValue.split('session=')[1]?.split('&')[0];
-            const config = { appId: 'mindforge-academy' };
+            const config = { appId: 'mindforge-academy-p2p' };
             room = joinRoom(config, sessionId || 'global-attendance');
             const [, getAttendance] = room.makeAction('attendance');
             
+            room.onPeerJoin(() => setPeerCount(room.getPeers().length));
+            room.onPeerLeave(() => setPeerCount(room.getPeers().length));
+
             getAttendance(data => {
                 console.log("P2P Attendance Received:", data);
                 setAttLog(prev => {
@@ -1542,6 +1547,7 @@ export default function Staff() {
                                         <FaUsers className="score-sec-icon attendance-log-icon" /> 
                                         Live Attendance Log
                                         <div className="live-pill">LIVE</div>
+                                        {peerCount > 0 && <div className="peers-pill">{peerCount} Peers Connected</div>}
                                     </div>
                                     <button className="purge-btn" onClick={purgeAttendance}>
                                         <FaTrash /> Purge Records

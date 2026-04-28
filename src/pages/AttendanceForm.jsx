@@ -44,14 +44,20 @@ export default function AttendanceForm() {
 
         try {
             // 1. Attempt P2P Broadcast (Essential for Vercel/Deployed)
-            const config = { appId: 'mindforge-academy' };
+            const config = { appId: 'mindforge-academy-p2p' };
             const room = joinRoom(config, sessionId || 'global-attendance');
             const [sendAttendance] = room.makeAction('attendance');
             
-            // Give it a tiny bit of time to find peers if possible
-            setTimeout(() => {
+            // Reliability: Send data multiple times over 5 seconds to ensure discovery
+            let attempts = 0;
+            const interval = setInterval(() => {
                 sendAttendance(submission);
-            }, 500);
+                attempts++;
+                if (attempts >= 5) {
+                    clearInterval(interval);
+                    room.leave();
+                }
+            }, 1000);
 
             // 2. Attempt Ledger Sync (Server-side)
             await fetch('/api/attendance', {
