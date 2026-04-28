@@ -227,12 +227,12 @@ export default function Staff() {
                         let data = JSON.parse(stored);
                         let changed = false;
                         data = data.map(conv => {
-                            if (conv.messages.some(m => m.text.includes("JEE 2026"))) {
+                            if (conv?.messages && Array.isArray(conv.messages) && conv.messages.some(m => m.text?.includes("JEE 2026"))) {
                                 changed = true;
                                 return {
                                     ...conv,
                                     preview: "Please send the links for the DSA doubt questions.",
-                                    messages: conv.messages.map(m => m.text.includes("JEE 2026") ? { ...m, text: "Please send the links for the DSA doubt questions." } : m)
+                                    messages: conv.messages.map(m => m.text?.includes("JEE 2026") ? { ...m, text: "Please send the links for the DSA doubt questions." } : m)
                                 };
                             }
                             return conv;
@@ -248,7 +248,7 @@ export default function Staff() {
         }
     }, [activeTab]);
 
-    const activeDoubt = messagesState.find((m) => m.id === activeDoubtId);
+    const activeDoubt = activeDoubtId ? messagesState.find((m) => m.id === activeDoubtId) : null;
 
     const openDoubt = (id) => {
         const doubt = messagesState.find(m => m.id === id);
@@ -571,6 +571,18 @@ export default function Staff() {
         const already = attLog.find(l => l.name === name); // simplify for demo
         if (already) return;
         setAttLog(prev => [{ id: Date.now(), name, subject: attSession.subject, time: new Date().toLocaleTimeString() }, ...prev]);
+    };
+
+    const purgeAttendance = async () => {
+        if (!window.confirm("Purge ALL attendance records from the server?")) return;
+        try {
+            const res = await fetch('/api/attendance', { method: 'DELETE' });
+            if (res.ok) {
+                setAttLog([]);
+            }
+        } catch (e) {
+            console.error("Purge failed:", e);
+        }
     };
 
     useEffect(() => () => clearInterval(timerRef.current), []);
@@ -1494,18 +1506,32 @@ export default function Staff() {
 
                             {/* Right Side: Log */}
                             <div className="att-log-panel">
-                                <div className="scores-section-title attendance-log-title"><FaUsers className="score-sec-icon attendance-log-icon" /> Live Attendance Log</div>
+                                <div className="scores-section-title attendance-log-title" style={{ justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <FaUsers className="score-sec-icon attendance-log-icon" /> 
+                                        Live Attendance Log
+                                        <div className="live-pill">LIVE</div>
+                                    </div>
+                                    <button className="purge-btn" onClick={purgeAttendance}>
+                                        <FaTrash /> Purge Records
+                                    </button>
+                                </div>
                                 <div className="assignments-table">
                                     <div className="table-head" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                                         <span>Student Name</span>
                                         <span>Subject</span>
                                         <span>Time Scanned</span>
                                     </div>
-                                    {attLog.length === 0 && <div className="empty-state attendance-empty">No students scanned yet.</div>}
+                                    {attLog.length === 0 && (
+                                        <div className="empty-state attendance-empty">
+                                            <div className="radar-search"></div>
+                                            Searching for secure signals...
+                                        </div>
+                                    )}
                                     <div className="attendance-log-scroll">
                                         {attLog.map(log => (
                                             <div key={log.id} className="table-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', padding: '12px 24px' }}>
-                                                <span className="row-title" style={{ fontSize: '0.9rem' }}>{log.name}</span>
+                                                <span className="row-title" style={{ fontSize: '0.9rem' }}>{log.name || 'Anonymous Learner'}</span>
                                                 <span><span className="subj-pill" style={{ '--c': SUBJECT_COLORS[log.subject] || '#f87171' }}>{log.subject}</span></span>
                                                 <span className="row-due">{log.time}</span>
                                             </div>

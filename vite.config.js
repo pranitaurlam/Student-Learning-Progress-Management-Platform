@@ -252,6 +252,15 @@ const attendanceApi = () => {
           return;
         }
 
+        if (url === '/api/attendance' && req.method === 'DELETE') {
+          writeJsonFile(attendancePath, []);
+          console.log(`[Attendance] All records purged by staff`);
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ success: true }));
+          return;
+        }
+
         if (url === '/api/attendance' && req.method === 'POST') {
           let body = '';
           req.on('data', (chunk) => {
@@ -260,20 +269,26 @@ const attendanceApi = () => {
           req.on('end', () => {
             try {
               const data = JSON.parse(body);
+              console.log(`[Attendance] Received submission from ${data.name} for ${data.subject}`);
+              
               const attendanceLog = readJsonFile(attendancePath, []);
-              attendanceLog.unshift({
+              const newEntry = {
                 ...data,
                 id: Date.now(),
                 createdAt: new Date().toISOString(),
-              });
+              };
+              attendanceLog.unshift(newEntry);
               writeJsonFile(attendancePath, attendanceLog);
+              
+              console.log(`[Attendance] Successfully recorded entry for ${data.name}`);
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify({ success: true }));
-            } catch {
+              res.end(JSON.stringify({ success: true, entryId: newEntry.id }));
+            } catch (err) {
+              console.error(`[Attendance] Failed to process submission:`, err);
               res.statusCode = 400;
               res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify({ success: false, error: 'Bad Request' }));
+              res.end(JSON.stringify({ success: false, error: 'Malformed request' }));
             }
           });
           return;

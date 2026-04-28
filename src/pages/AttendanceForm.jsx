@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FaCheckCircle, FaClipboardList } from 'react-icons/fa';
+import { IoFingerPrintOutline, IoCheckmarkCircleOutline, IoAlertCircleOutline, IoArrowForwardOutline } from 'react-icons/io5';
 import './AttendanceForm.css';
-
-const ATTENDANCE_STORAGE_KEY = 'mindforge_attendance_submissions';
 
 export default function AttendanceForm() {
     const [searchParams] = useSearchParams();
-    const subject = searchParams.get('subject') || 'General Session';
-    const label = searchParams.get('label') || 'General';
-    const sessionId = searchParams.get('session') || 'unknown';
+    const subject = searchParams.get('subject') || 'Advanced Module';
+    const label = searchParams.get('label') || 'CORE';
+    const sessionId = searchParams.get('session') || 'unregistered';
 
     const [form, setForm] = useState({
         name: '',
@@ -18,20 +16,22 @@ export default function AttendanceForm() {
         happened: ''
     });
 
-    const [submitted, setSubmitted] = useState(false);
-    const [isConnecting, setIsConnecting] = useState(true);
+    const [status, setStatus] = useState('idle'); // idle, connecting, submitting, success, error
+    const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsConnecting(false);
-        }, 2000);
-        return () => clearTimeout(timer);
+        setStatus('connecting');
+        // Real check: probe the health endpoint
+        fetch('/api/network-info')
+            .then(res => res.ok ? setStatus('idle') : setStatus('error'))
+            .catch(() => setStatus('error'));
     }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!form.name.trim()) return;
 
+        setStatus('submitting');
         const submission = {
             sessionId,
             subject,
@@ -41,51 +41,38 @@ export default function AttendanceForm() {
         };
 
         try {
-            await fetch('/api/attendance', {
+            const res = await fetch('/api/attendance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(submission)
             });
-            setSubmitted(true);
+            
+            if (res.ok) {
+                setStatus('success');
+            } else {
+                throw new Error('Submission rejected by server');
+            }
         } catch (err) {
-            console.error("Failed to submit attendance syncing: ", err);
-            // Fallback for safety
-            setSubmitted(true);
+            console.error("Attendance failure:", err);
+            setStatus('error');
+            setErrorMsg('System synchronization failed. Please try again.');
         }
     };
 
-    if (submitted) {
+    if (status === 'success') {
         return (
             <div className="att-form-page">
-                <div className="att-form-container att-success">
-                    <FaCheckCircle className="att-success-icon" />
-                    <h2>Attendance Recorded!</h2>
-                    <p>Your response for <strong>{subject}</strong> has been submitted successfully.</p>
-                    <button className="att-submit-btn" onClick={() => window.close()}>Close Tab</button>
-                    <p style={{ marginTop: 20, fontSize: '0.8rem', color: '#9ca3af' }}>You can now return to your class.</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (isConnecting) {
-        return (
-            <div className="att-form-page">
-                <div className="att-form-container att-success" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 40px' }}>
-                    <div className="spinner" style={{
-                        border: '4px solid rgba(0,0,0,0.1)',
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        borderLeftColor: '#60a5fa',
-                        animation: 'spin 1s linear infinite',
-                        marginBottom: '24px'
-                    }}></div>
-                    <style>{`
-                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    `}</style>
-                    <h2 style={{ margin: 0, color: '#4b5563', fontSize: '1.2rem', fontWeight: '500' }}>Connecting to server...</h2>
-                    <p style={{ marginTop: 10, fontSize: '0.9rem', color: '#9ca3af' }}>Please wait while we establish a secure connection.</p>
+                <div className="mesh-gradient"></div>
+                <div className="att-glass-card success-entry">
+                    <div className="success-icon-wrap">
+                        <IoCheckmarkCircleOutline />
+                    </div>
+                    <h2>Identity Verified</h2>
+                    <p>Attendance for <strong>{subject}</strong> recorded in the secure ledger.</p>
+                    <div className="session-pill">{sessionId}</div>
+                    <button className="att-prime-btn" onClick={() => window.close()}>
+                        Exit Session <IoArrowForwardOutline />
+                    </button>
                 </div>
             </div>
         );
@@ -93,73 +80,97 @@ export default function AttendanceForm() {
 
     return (
         <div className="att-form-page">
-            <form className="att-form-container" onSubmit={handleSubmit}>
-                <div className="att-form-header"></div>
-                <div className="att-form-content">
-                    <div className="att-form-title-section">
-                        <h1>Session Attendance</h1>
-                        <p>Please fill out this form to mark your attendance for <strong>{subject}</strong> ({label}).</p>
-                    </div>
-
-                    {/* Name */}
-                    <div className="att-field">
-                        <label>your name: <span>*</span></label>
-                        <input
-                            type="text"
-                            className="att-input-text"
-                            placeholder="Your answer"
-                            required
-                            value={form.name}
-                            onChange={e => setForm({ ...form, name: e.target.value })}
-                        />
-                    </div>
-
-                    {/* Semester */}
-                    <div className="att-field">
-                        <label>your sem: <span>*</span></label>
-                        <input
-                            type="text"
-                            className="att-input-text"
-                            placeholder="Your answer"
-                            required
-                            value={form.sem}
-                            onChange={e => setForm({ ...form, sem: e.target.value })}
-                        />
-                    </div>
-
-                    {/* Batch */}
-                    <div className="att-field">
-                        <label>your batch: <span>*</span></label>
-                        <input
-                            type="text"
-                            className="att-input-text"
-                            placeholder="Your answer"
-                            required
-                            value={form.batch}
-                            onChange={e => setForm({ ...form, batch: e.target.value })}
-                        />
-                    </div>
-
-                    {/* What happen in class */}
-                    <div className="att-field">
-                        <label>what happen in class: <span>*</span></label>
-                        <textarea
-                            className="att-input-text"
-                            placeholder="Your answer"
-                            required
-                            rows={4}
-                            style={{ resize: 'vertical', borderBottom: '1px solid #d1d5db' }}
-                            value={form.happened}
-                            onChange={e => setForm({ ...form, happened: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="att-submit-row">
-                        <button type="submit" className="att-submit-btn">Submit</button>
-                        <button type="button" className="att-clear-btn" onClick={() => setForm({ name: '', sem: '', batch: '', happened: '' })}>Clear form</button>
-                    </div>
+            <div className="mesh-gradient"></div>
+            
+            {status === 'connecting' && (
+                <div className="att-preloader">
+                    <div className="scanner-line"></div>
+                    <div className="display-giant">0{Math.floor(Math.random() * 9)}</div>
+                    <p>SYNCHRONIZING SECURE TUNNEL...</p>
                 </div>
-            </form>
+            )}
+
+            {(status === 'idle' || status === 'submitting' || status === 'error') && (
+                <form className="att-glass-card" onSubmit={handleSubmit}>
+                    <div className="card-accent-top"></div>
+                    
+                    <header className="att-header">
+                        <div className="brand-icon">
+                            <IoFingerPrintOutline />
+                        </div>
+                        <div className="title-stack">
+                            <h1>Session Access</h1>
+                            <p>{subject} <span className="label-lite">{label}</span></p>
+                        </div>
+                    </header>
+
+                    {status === 'error' && (
+                        <div className="error-banner">
+                            <IoAlertCircleOutline /> {errorMsg || 'Connection unstable'}
+                        </div>
+                    )}
+
+                    <div className="att-grid">
+                        <div className="att-input-group">
+                            <label>Full Name</label>
+                            <input
+                                type="text"
+                                placeholder="Enter your full name"
+                                required
+                                disabled={status === 'submitting'}
+                                value={form.name}
+                                onChange={e => setForm({ ...form, name: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="att-input-group">
+                            <label>Semester</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. SEM 4"
+                                required
+                                disabled={status === 'submitting'}
+                                value={form.sem}
+                                onChange={e => setForm({ ...form, sem: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="att-input-group">
+                            <label>Batch Code</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. B1"
+                                required
+                                disabled={status === 'submitting'}
+                                value={form.batch}
+                                onChange={e => setForm({ ...form, batch: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="att-input-group full">
+                            <label>Session Reflection</label>
+                            <textarea
+                                placeholder="Briefly describe what was covered..."
+                                required
+                                disabled={status === 'submitting'}
+                                rows={3}
+                                value={form.happened}
+                                onChange={e => setForm({ ...form, happened: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="att-footer">
+                        <button 
+                            type="submit" 
+                            className={`att-prime-btn ${status === 'submitting' ? 'loading' : ''}`}
+                            disabled={status === 'submitting'}
+                        >
+                            {status === 'submitting' ? 'RECORDING...' : 'VERIFY ATTENDANCE'}
+                        </button>
+                    </div>
+                </form>
+            )}
         </div>
     );
 }
