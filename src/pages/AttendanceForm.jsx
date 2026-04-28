@@ -48,12 +48,12 @@ export default function AttendanceForm() {
             const room = joinRoom(config, sessionId || 'global-attendance');
             const [sendAttendance] = room.makeAction('attendance');
             
-            // Reliability: Send data multiple times over 5 seconds to ensure discovery
+            // Reliability: Send data multiple times over 10 seconds to ensure discovery
             let attempts = 0;
             const interval = setInterval(() => {
                 sendAttendance(submission);
                 attempts++;
-                if (attempts >= 5) {
+                if (attempts >= 10) {
                     clearInterval(interval);
                     room.leave();
                 }

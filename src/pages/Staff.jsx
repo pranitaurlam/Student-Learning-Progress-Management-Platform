@@ -558,21 +558,26 @@ export default function Staff() {
         // 1. P2P Channel (For Vercel/Deployed)
         let room;
         if (activeTab === 'attendance' && qrValue) {
-            const sessionId = qrValue.split('session=')[1]?.split('&')[0];
-            const config = { appId: 'mindforge-academy-p2p' };
-            room = joinRoom(config, sessionId || 'global-attendance');
-            const [, getAttendance] = room.makeAction('attendance');
-            
-            room.onPeerJoin(() => setPeerCount(room.getPeers().length));
-            room.onPeerLeave(() => setPeerCount(room.getPeers().length));
+            try {
+                const url = new URL(qrValue);
+                const sessionId = url.searchParams.get('session');
+                const config = { appId: 'mindforge-academy-p2p' };
+                room = joinRoom(config, sessionId || 'global-attendance');
+                const [, getAttendance] = room.makeAction('attendance');
+                
+                room.onPeerJoin(() => setPeerCount(room.getPeers().length));
+                room.onPeerLeave(() => setPeerCount(room.getPeers().length));
 
-            getAttendance(data => {
-                console.log("P2P Attendance Received:", data);
-                setAttLog(prev => {
-                    if (prev.some(l => l.id === data.id)) return prev;
-                    return [data, ...prev];
+                getAttendance(data => {
+                    console.log("P2P Attendance Received:", data);
+                    setAttLog(prev => {
+                        if (prev.some(l => l.id === data.id)) return prev;
+                        return [data, ...prev];
+                    });
                 });
-            });
+            } catch (e) {
+                console.warn("Invalid QR URL for P2P:", e);
+            }
         }
 
         // 2. API Polling (For Dev/Local)
@@ -610,15 +615,11 @@ export default function Staff() {
     };
 
     const purgeAttendance = async () => {
-        if (!window.confirm("Purge ALL attendance records from the server?")) return;
+        if (!window.confirm("Purge ALL attendance records from the server and local list?")) return;
+        setAttLog([]);
         try {
-            const res = await fetch('/api/attendance', { method: 'DELETE' });
-            if (res.ok) {
-                setAttLog([]);
-            }
-        } catch (e) {
-            console.error("Purge failed:", e);
-        }
+            await fetch('/api/attendance', { method: 'DELETE' });
+        } catch (e) { }
     };
 
     useEffect(() => () => clearInterval(timerRef.current), []);
@@ -1575,13 +1576,6 @@ export default function Staff() {
                                         ))}
                                     </div>
                                 </div>
-                                {qrValue && (
-                                    <div className="attendance-demo-wrap">
-                                        <button className="primary-btn attendance-demo-btn" style={{ '--btn-color': '#34d399', '--btn-hover': '#10b981' }} onClick={simulateScan}>
-                                            [Demo] Simulate Student Scan
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
