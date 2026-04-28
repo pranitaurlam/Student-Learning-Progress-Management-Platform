@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/(api|api_dev|api/results|api/practice-results|api/mock-results|api/attendance|api/network-info|api/recordings|api/recordings/.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
