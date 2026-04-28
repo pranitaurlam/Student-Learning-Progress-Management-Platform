@@ -44,8 +44,11 @@ export default function AttendanceForm() {
 
         try {
             // 1. Attempt P2P Broadcast (Essential for Vercel/Deployed)
-            const config = { appId: 'mindforge-academy-p2p' };
-            const room = joinRoom(config, sessionId || 'global-attendance');
+            const config = { 
+                appId: 'mindforge-p2p-v2',
+                relayUrls: ['wss://relay.nostr.band', 'wss://relay.damus.io', 'wss://nos.lol']
+            };
+            const room = joinRoom(config, 'mindforge-global-attendance');
             const [sendAttendance] = room.makeAction('attendance');
             
             // Reliability: Send data multiple times over 10 seconds to ensure discovery

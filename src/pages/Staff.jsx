@@ -553,34 +553,35 @@ export default function Staff() {
 
     const [peerCount, setPeerCount] = useState(0);
 
-    // Listen for real student scans (P2P + API)
+    // Global P2P Listener (Ensures background receipt of signals)
     useEffect(() => {
-        // 1. P2P Channel (For Vercel/Deployed)
         let room;
-        if (activeTab === 'attendance' && qrValue) {
-            try {
-                const url = new URL(qrValue);
-                const sessionId = url.searchParams.get('session');
-                const config = { appId: 'mindforge-academy-p2p' };
-                room = joinRoom(config, sessionId || 'global-attendance');
-                const [, getAttendance] = room.makeAction('attendance');
-                
-                room.onPeerJoin(() => setPeerCount(room.getPeers().length));
-                room.onPeerLeave(() => setPeerCount(room.getPeers().length));
+        const config = { 
+            appId: 'mindforge-p2p-v2',
+            relayUrls: ['wss://relay.nostr.band', 'wss://relay.damus.io', 'wss://nos.lol'] 
+        };
 
-                getAttendance(data => {
-                    console.log("P2P Attendance Received:", data);
-                    setAttLog(prev => {
-                        if (prev.some(l => l.id === data.id)) return prev;
-                        return [data, ...prev];
-                    });
-                });
-            } catch (e) {
-                console.warn("Invalid QR URL for P2P:", e);
-            }
-        }
+        // Join global room for discovery + session specific room if ready
+        room = joinRoom(config, 'mindforge-global-attendance');
+        const [, getGlobalAttendance] = room.makeAction('attendance');
+        
+        const handleData = (data) => {
+            console.log("P2P Signal Received:", data);
+            setAttLog(prev => {
+                if (prev.some(l => l.id === data.id)) return prev;
+                return [data, ...prev];
+            });
+        };
 
-        // 2. API Polling (For Dev/Local)
+        getGlobalAttendance(handleData);
+        room.onPeerJoin(() => setPeerCount(room.getPeers().length));
+        room.onPeerLeave(() => setPeerCount(room.getPeers().length));
+
+        return () => room.leave();
+    }, []);
+
+    // Listen for API Polling (For Dev/Local Fallback)
+    useEffect(() => {
         const interval = setInterval(async () => {
             try {
                 const res = await fetch('/api/attendance');
@@ -593,16 +594,10 @@ export default function Staff() {
                         }
                     }
                 }
-            } catch (e) {
-                // Silently ignore sync errors in production
-            }
-        }, 2000);
-        
-        return () => {
-            clearInterval(interval);
-            if (room) room.leave();
-        };
-    }, [attLog, activeTab, qrValue]);
+            } catch (e) { }
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [attLog]);
 
     // Simulate a student scanning (demo button)
     const simulateScan = () => {
