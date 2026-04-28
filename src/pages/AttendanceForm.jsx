@@ -78,7 +78,8 @@ export default function AttendanceForm() {
                         <IoCheckmarkCircleOutline />
                     </div>
                     <h2>Identity Verified</h2>
-                    <p>Attendance for <strong>{subject}</strong> recorded in the secure ledger.</p>
+                    <p className="welcome-back-text">Attendance confirmed for <strong>{form.name}</strong></p>
+                    <p>Session: <strong>{subject}</strong> recorded in the secure ledger.</p>
                     <div className="session-pill">{sessionId}</div>
                     <button className="att-prime-btn" onClick={() => window.close()}>
                         Exit Session <IoArrowForwardOutline />
