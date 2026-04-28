@@ -32,7 +32,7 @@ import {
 } from "recharts";
 import "./Dashboard.css";
 
-const PIE_COLORS = ["#22c55e", "#f97316", "#ef4444"];
+const PIE_COLORS = ["#34d399", "#f7b94c", "#fb7185"];
 
 const SUBJECT_LABELS = {
     "ai-ml": "AI/ML",
@@ -69,7 +69,6 @@ function computeAnalytics(history) {
         };
     }
 
-    // Performance Trend — accuracy per day of week (last 7 unique days attempted)
     const byDay = {};
     history.forEach((r) => {
         const d = DAYS[new Date(r.date).getDay()];
@@ -83,7 +82,6 @@ function computeAnalytics(history) {
             : { day: d, accuracy: 0 }
     );
 
-    // Topic Performance — avg accuracy per subject
     const bySubject = {};
     history.forEach((r) => {
         const label = SUBJECT_LABELS[r.subject] || r.subject;
@@ -98,7 +96,6 @@ function computeAnalytics(history) {
             : 0,
     }));
 
-    // Difficulty distribution — count of tests per difficulty
     const diffCount = { Easy: 0, Medium: 0, Hard: 0 };
     history.forEach((r) => {
         if (diffCount[r.difficulty] !== undefined) diffCount[r.difficulty]++;
@@ -110,7 +107,6 @@ function computeAnalytics(history) {
         { name: "Hard", value: Math.round((diffCount.Hard / diffTotal) * 100) },
     ];
 
-    // Time Spent — total seconds per subject → minutes
     const timeBySubject = {};
     history.forEach((r) => {
         const label = SUBJECT_LABELS[r.subject] || r.subject;
@@ -121,7 +117,6 @@ function computeAnalytics(history) {
         minutes: Math.round((timeBySubject[label] || 0) / 60),
     }));
 
-    // Summary stats
     const totalQuestions = history.reduce((s, r) => s + r.attempted, 0);
     const avgAccuracy = Math.round(
         history.reduce((s, r) => s + r.accuracy, 0) / history.length
@@ -137,30 +132,6 @@ function computeAnalytics(history) {
         testsCompleted: history.length,
     };
 }
-
-const assignmentsData = [
-    {
-        id: 1,
-        title: "Neural Networks Basics",
-        subject: "AI/ML",
-        due: "Today, 11:59 PM",
-        status: "Pending",
-    },
-    {
-        id: 2,
-        title: "Binary Trees Implementation",
-        subject: "DSA",
-        due: "Tomorrow",
-        status: "Pending",
-    },
-    {
-        id: 3,
-        title: "React Hooks Deep Dive",
-        subject: "Web Dev",
-        due: "In 2 days",
-        status: "In Progress",
-    },
-];
 
 const announcementsData = [
     {
@@ -182,8 +153,6 @@ const announcementsData = [
         content: "Scheduled maintenance on Sunday 2 AM.",
     },
 ];
-
-// Dynamic Timetable is now used
 
 const studyMaterialData = [
     {
@@ -228,15 +197,12 @@ function getStreakData() {
             const data = JSON.parse(saved);
             const today = new Date().toDateString();
 
-            // If they already pressed today, return as is
             if (data.lastDate === today) {
                 return { ...data, pressedToday: true };
             }
 
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
-
-            // If the last pressed date is NOT yesterday, the streak is broken
             if (data.lastDate !== yesterday.toDateString()) {
                 data.streak = 0;
             }
@@ -256,55 +222,6 @@ export default function Dashboard() {
     const [analytics, setAnalytics] = useState(() => computeAnalytics(loadHistory()));
     const [timetable, setTimetable] = useState([]);
     const [recordings, setRecordings] = useState([]);
-
-    useEffect(() => {
-        const loadTt = () => {
-            const stored = localStorage.getItem('mindforge_timetable');
-            if (stored) setTimetable(JSON.parse(stored));
-        };
-        const loadRecordings = () => {
-            const request = indexedDB.open('mindforge_stream_db', 1);
-            request.onupgradeneeded = e => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains('recordings')) {
-                    db.createObjectStore('recordings', { keyPath: 'id' });
-                }
-            };
-            request.onsuccess = e => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains('recordings')) {
-                    db.close();
-                    return;
-                }
-                const tx = db.transaction('recordings', 'readonly');
-                const store = tx.objectStore('recordings');
-                const getReq = store.getAll();
-                getReq.onsuccess = () => {
-                    const recs = (getReq.result || []).sort((a, b) => b.id - a.id);
-                    const mappedRecs = recs.map(r => ({ ...r, videoUrl: URL.createObjectURL(r.blob) }));
-                    setRecordings(mappedRecs);
-                    db.close();
-                };
-                getReq.onerror = () => db.close();
-            };
-        };
-
-        loadTt();
-        loadRecordings();
-        const interval = setInterval(() => {
-            loadTt();
-            loadRecordings();
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    // Re-compute analytics whenever the page becomes visible (user returns from a test)
-    useEffect(() => {
-        const refresh = () => setAnalytics(computeAnalytics(loadHistory()));
-        window.addEventListener("focus", refresh);
-        return () => window.removeEventListener("focus", refresh);
-    }, []);
     const [assignments, setAssignments] = useState([
         {
             id: 1,
@@ -332,8 +249,38 @@ export default function Dashboard() {
         },
     ]);
 
-    const goToMockTests = () => navigate("/mock-tests");
-    const goToPracticeQuestions = () => navigate("/practice-questions");
+    useEffect(() => {
+        const loadTt = () => {
+            const stored = localStorage.getItem("mindforge_timetable");
+            if (stored) setTimetable(JSON.parse(stored));
+        };
+        const loadRecordings = async () => {
+            try {
+                const res = await fetch("/api/recordings");
+                if (res.ok) {
+                    const data = await res.json();
+                    setRecordings(data.sort((a, b) => b.id - a.id));
+                }
+            } catch (e) {
+                console.error("Failed to load recordings:", e);
+            }
+        };
+
+        loadTt();
+        loadRecordings();
+        const interval = setInterval(() => {
+            loadTt();
+            loadRecordings();
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        const refresh = () => setAnalytics(computeAnalytics(loadHistory()));
+        window.addEventListener("focus", refresh);
+        return () => window.removeEventListener("focus", refresh);
+    }, []);
 
     useEffect(() => {
         const { pressedToday, ...rest } = streakData;
@@ -342,7 +289,7 @@ export default function Dashboard() {
 
     const handleStreakPress = () => {
         const today = new Date().toDateString();
-        if (streakData.lastDate === today) return; // already pressed today
+        if (streakData.lastDate === today) return;
 
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -363,7 +310,7 @@ export default function Dashboard() {
 
     const handleFileUpload = (id, file) => {
         setAssignments((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, file: file } : item)),
+            prev.map((item) => (item.id === id ? { ...item, file } : item)),
         );
     };
 
@@ -376,57 +323,99 @@ export default function Dashboard() {
         alert("Assignment Submitted Successfully!");
     };
 
+    const goToMockTests = () => navigate("/mock-tests");
+    const goToPracticeQuestions = () => navigate("/practice-questions");
+
+    const nextSession = timetable[0];
+    const pendingAssignments = assignments.filter((item) => item.status !== "Submitted").length;
+    const focusPills = [
+        `${analytics.testsCompleted} tests logged`,
+        `${pendingAssignments} assignments active`,
+        `${recordings.length} recordings available`,
+    ];
+
+    const chartTheme = {
+        grid: "rgba(148, 163, 184, 0.12)",
+        axis: "rgba(226, 232, 240, 0.62)",
+        tooltipBackground: "#0f1b2f",
+        tooltipBorder: "1px solid rgba(247, 185, 76, 0.16)",
+    };
+
     return (
         <div className="dashboard-page">
-            {/* AI Banner */}
-            <section className="ai-banner">
-                <div className="container">
-                    <div className="ai-banner-content">
-                        <div className="ai-banner-icon">
-                            <IoSchool />
-                        </div>
-                        <div>
-                            <h3>Stuck on a problem?</h3>
-                            <p>
-                                Ask our AI Tutor for instant explanations and step-by-step help.
-                            </p>
-                        </div>
-                    </div>
-                    <Link to="/ai-chat">
-                        <button className="ai-banner-btn">Ask AI Doubt Chat →</button>
-                    </Link>
-                </div>
-            </section>
-
             <div className="container">
-                {/* Streak */}
-                <div className="streak-card">
-                    <div className="streak-header">
-                        <FaFire className="streak-icon" />
-                        <h3>Daily Streak</h3>
-                    </div>
-                    <div className="streak-count">{streakData.streak}</div>
-                    <div className="streak-label">days in a row!</div>
-                    <div className="streak-meta">
-                        <span>Longest streak: {streakData.longest} days</span>
-                        <span>Total points: {streakData.points}</span>
-                    </div>
-                    <button
-                        className={`streak-btn ${streakData.pressedToday ? "disabled" : ""}`}
-                        onClick={handleStreakPress}
-                        disabled={streakData.pressedToday}
-                    >
-                        {streakData.pressedToday
-                            ? "✅ Checked In Today!"
-                            : "🔥 Check In Today"}
-                    </button>
-                </div>
+                <section className="dashboard-hero">
+                    <div className="dashboard-hero-copy">
+                        <span className="eyebrow">Student command center</span>
+                        <h1>Welcome back. Let&apos;s make today&apos;s study session count.</h1>
+                        <p>
+                            Everything important is surfaced here first: your streak, current progress,
+                            active work, and the fastest path into practice.
+                        </p>
 
-                {/* Stats */}
+                        <div className="dashboard-pills">
+                            {focusPills.map((pill) => (
+                                <span key={pill} className="dashboard-pill">{pill}</span>
+                            ))}
+                        </div>
+
+                        <div className="dashboard-hero-actions">
+                            <Link to="/ai-chat" className="button-primary">Open AI Tutor</Link>
+                            <button type="button" className="button-secondary" onClick={goToMockTests}>
+                                Start Mock Test
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="dashboard-hero-rail">
+                        <div className="streak-card">
+                            <div className="streak-header">
+                                <FaFire className="streak-icon" />
+                                <h3>Daily Streak</h3>
+                            </div>
+                            <div className="streak-count">{streakData.streak}</div>
+                            <div className="streak-label">days in a row</div>
+                            <div className="streak-meta">
+                                <span>Longest streak: {streakData.longest} days</span>
+                                <span>Total points: {streakData.points}</span>
+                            </div>
+                            <button
+                                className={`streak-btn ${streakData.pressedToday ? "disabled" : ""}`}
+                                onClick={handleStreakPress}
+                                disabled={streakData.pressedToday}
+                            >
+                                {streakData.pressedToday ? "Checked In Today" : "Check In Today"}
+                            </button>
+                        </div>
+
+                        <div className="hero-side-card">
+                            <div className="hero-side-header">
+                                <IoSchool />
+                                <span>Next up</span>
+                            </div>
+                            {nextSession ? (
+                                <>
+                                    <h3>{nextSession.subject}</h3>
+                                    <p>{nextSession.topic}</p>
+                                    <div className="hero-side-meta">
+                                        <span>{nextSession.time}</span>
+                                        <span>Live session</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h3>No live class scheduled</h3>
+                                    <p>Use the time for practice, review, or a quick mock test run.</p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 <div className="stats-row">
                     <div className="stat-card">
                         <div className="stat-card-header">
-                            <FaQuestionCircle className="stat-card-icon purple" />
+                            <FaQuestionCircle className="stat-card-icon amber" />
                             <span>Questions Answered</span>
                         </div>
                         <div className="stat-value">{analytics.totalQuestions}</div>
@@ -436,20 +425,28 @@ export default function Dashboard() {
                             <MdCheckCircle className="stat-card-icon green" />
                             <span>Accuracy</span>
                         </div>
-                        <div className="stat-value">{analytics.testsCompleted > 0 ? `${analytics.avgAccuracy}%` : "0%"}</div>
+                        <div className="stat-value">
+                            {analytics.testsCompleted > 0 ? `${analytics.avgAccuracy}%` : "0%"}
+                        </div>
                     </div>
                     <div className="stat-card">
                         <div className="stat-card-header">
-                            <FaTrophy className="stat-card-icon red" />
+                            <FaTrophy className="stat-card-icon cyan" />
                             <span>Tests Completed</span>
                         </div>
                         <div className="stat-value">{analytics.testsCompleted}</div>
                     </div>
                 </div>
 
-                {/* Quick Actions */}
                 <section className="quick-actions">
-                    <h2 className="section-title">Study Center</h2>
+                    <div className="section-heading">
+                        <div>
+                            <span className="eyebrow">Core tools</span>
+                            <h2>Study Center</h2>
+                        </div>
+                        <p>Jump into the next high-value action without hunting through the portal.</p>
+                    </div>
+
                     <div className="actions-grid">
                         <div
                             className="action-card mock-test"
@@ -465,7 +462,7 @@ export default function Dashboard() {
                             </div>
                             <div className="action-content">
                                 <h3>Mock Tests</h3>
-                                <p>Take full-length exams to simulate real test conditions.</p>
+                                <p>Run a timed paper and get a fast read on where your accuracy stands.</p>
                                 <button
                                     type="button"
                                     className="action-btn"
@@ -474,10 +471,11 @@ export default function Dashboard() {
                                         goToMockTests();
                                     }}
                                 >
-                                    Start Test →
+                                    Start Test
                                 </button>
                             </div>
                         </div>
+
                         <div
                             className="action-card practice"
                             onClick={goToPracticeQuestions}
@@ -492,7 +490,7 @@ export default function Dashboard() {
                             </div>
                             <div className="action-content">
                                 <h3>Practice Questions</h3>
-                                <p>Solve topic-wise questions to strengthen your weak areas.</p>
+                                <p>Work topic-wise sets to improve the places that still feel shaky.</p>
                                 <button
                                     type="button"
                                     className="action-btn"
@@ -501,10 +499,11 @@ export default function Dashboard() {
                                         goToPracticeQuestions();
                                     }}
                                 >
-                                    Start Practice →
+                                    Start Practice
                                 </button>
                             </div>
                         </div>
+
                         <div
                             className="action-card live-class"
                             onClick={() => navigate("/live-class")}
@@ -519,7 +518,7 @@ export default function Dashboard() {
                             </div>
                             <div className="action-content">
                                 <h3>Live Class</h3>
-                                <p>Join an ongoing or upcoming live lecture with your instructors.</p>
+                                <p>Join the active room or check what is coming up next in the schedule.</p>
                                 <button
                                     type="button"
                                     className="action-btn"
@@ -528,10 +527,11 @@ export default function Dashboard() {
                                         navigate("/live-class");
                                     }}
                                 >
-                                    Join Class →
+                                    Join Class
                                 </button>
                             </div>
                         </div>
+
                         <div
                             className="action-card certificates"
                             onClick={() => navigate("/certificates")}
@@ -546,7 +546,7 @@ export default function Dashboard() {
                             </div>
                             <div className="action-content">
                                 <h3>Certificates</h3>
-                                <p>View earned certificates and upload external ones.</p>
+                                <p>Review earned certificates and keep your records tidy in one place.</p>
                                 <button
                                     type="button"
                                     className="action-btn"
@@ -555,25 +555,22 @@ export default function Dashboard() {
                                         navigate("/certificates");
                                     }}
                                 >
-                                    View Now →
+                                    View Certificates
                                 </button>
                             </div>
                         </div>
-
                     </div>
                 </section>
 
-                {/* Updates Section: Assignments & Announcements */}
                 <section className="updates-section">
                     <div className="updates-grid">
-                        {/* Assignments Card */}
                         <div className="update-card assignments">
                             <div className="update-header">
                                 <div className="update-title">
                                     <FaBookOpen className="update-icon" />
                                     <h3>Assignments</h3>
                                 </div>
-                                <span className="view-all">View All</span>
+                                <span className="view-all">Current work</span>
                             </div>
                             <div className="update-list">
                                 {assignments.map((item) => (
@@ -594,10 +591,7 @@ export default function Dashboard() {
                                                             handleFileUpload(item.id, e.target.files[0])
                                                         }
                                                     />
-                                                    <label
-                                                        htmlFor={`file-${item.id}`}
-                                                        className="upload-btn"
-                                                    >
+                                                    <label htmlFor={`file-${item.id}`} className="upload-btn">
                                                         {item.file ? item.file.name : "Upload File"}
                                                     </label>
                                                     {item.file && (
@@ -611,9 +605,7 @@ export default function Dashboard() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div
-                                            className={`status-badge ${item.status.toLowerCase().replace(" ", "-")}`}
-                                        >
+                                        <div className={`status-badge ${item.status.toLowerCase().replace(" ", "-")}`}>
                                             {item.status}
                                         </div>
                                     </div>
@@ -621,14 +613,13 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Announcements Card */}
                         <div className="update-card announcements">
                             <div className="update-header">
                                 <div className="update-title">
                                     <FaBullhorn className="update-icon" />
                                     <h3>Announcements</h3>
                                 </div>
-                                <span className="view-all">View All</span>
+                                <span className="view-all">Latest notes</span>
                             </div>
                             <div className="update-list">
                                 {announcementsData.map((item) => (
@@ -645,17 +636,15 @@ export default function Dashboard() {
                     </div>
                 </section>
 
-                {/* Resources Section: Timetable & Study Material */}
                 <section className="updates-section">
                     <div className="updates-grid">
-                        {/* Timetable Card */}
                         <div className="update-card timetable">
                             <div className="update-header">
                                 <div className="update-title">
                                     <FaCalendarAlt className="update-icon" />
                                     <h3>Timetable</h3>
                                 </div>
-                                <span className="view-all">Full Schedule</span>
+                                <span className="view-all">Full schedule</span>
                             </div>
                             <div className="update-list">
                                 {timetable.length > 0 ? timetable.slice(0, 3).map((item) => (
@@ -669,19 +658,18 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                 )) : (
-                                    <p className="empty-msg" style={{ padding: '20px', fontSize: '0.8rem', opacity: 0.5 }}>No classes scheduled today.</p>
+                                    <p className="empty-msg">No classes scheduled today.</p>
                                 )}
                             </div>
                         </div>
 
-                        {/* Study Material Card */}
                         <div className="update-card study-material">
                             <div className="update-header">
                                 <div className="update-title">
                                     <FaFolderOpen className="update-icon" />
                                     <h3>Study Material</h3>
                                 </div>
-                                <span className="view-all">Browse All</span>
+                                <span className="view-all">Browse all</span>
                             </div>
                             <div className="update-list">
                                 {studyMaterialData.map((item) => (
@@ -704,14 +692,13 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Recorded Classes Card */}
                         <div className="update-card recorded-classes">
                             <div className="update-header">
                                 <div className="update-title">
-                                    <FaVideo className="update-icon" style={{ color: '#ef4444' }} />
+                                    <FaVideo className="update-icon" />
                                     <h3>Recorded Classes</h3>
                                 </div>
-                                <span className="view-all">View Archive</span>
+                                <span className="view-all">View archive</span>
                             </div>
                             <div className="update-list">
                                 {recordings.length > 0 ? recordings.map((item) => (
@@ -731,39 +718,37 @@ export default function Dashboard() {
                                         </div>
                                     </a>
                                 )) : (
-                                    <p className="empty-msg" style={{ padding: '20px', fontSize: '0.8rem', opacity: 0.5 }}>No recorded sessions available yet.</p>
+                                    <p className="empty-msg">No recorded sessions available yet.</p>
                                 )}
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Performance Analytics */}
                 <section className="analytics-section">
-                    <h2>Performance Analytics</h2>
+                    <div className="section-heading">
+                        <div>
+                            <span className="eyebrow">Progress view</span>
+                            <h2>Performance Analytics</h2>
+                        </div>
+                        <p>These charts keep the trends legible so students can tell what needs attention fast.</p>
+                    </div>
+
                     <div className="analytics-grid">
-                        {/* Performance Trend */}
                         <div className="chart-card">
                             <h3>Performance Trend</h3>
                             <p className="chart-subtitle">Accuracy over time</p>
                             <div className="chart-wrapper">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={analytics.performanceData}>
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            stroke="rgba(255,255,255,0.08)"
-                                        />
-                                        <XAxis
-                                            dataKey="day"
-                                            stroke="rgba(255,255,255,0.4)"
-                                            fontSize={12}
-                                        />
-                                        <YAxis stroke="rgba(255,255,255,0.4)" fontSize={12} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                                        <XAxis dataKey="day" stroke={chartTheme.axis} fontSize={12} />
+                                        <YAxis stroke={chartTheme.axis} fontSize={12} />
                                         <Tooltip
                                             contentStyle={{
-                                                background: "#1e1b4b",
-                                                border: "1px solid rgba(139,92,246,0.3)",
-                                                borderRadius: 8,
+                                                background: chartTheme.tooltipBackground,
+                                                border: chartTheme.tooltipBorder,
+                                                borderRadius: 12,
                                                 color: "#fff",
                                             }}
                                         />
@@ -771,9 +756,9 @@ export default function Dashboard() {
                                         <Line
                                             type="monotone"
                                             dataKey="accuracy"
-                                            stroke="#a78bfa"
-                                            strokeWidth={2}
-                                            dot={{ fill: "#a78bfa", r: 4 }}
+                                            stroke="#f7b94c"
+                                            strokeWidth={3}
+                                            dot={{ fill: "#f7b94c", r: 4 }}
                                             activeDot={{ r: 6 }}
                                         />
                                     </LineChart>
@@ -781,48 +766,33 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Topic Performance */}
                         <div className="chart-card">
                             <h3>Topic Performance</h3>
                             <p className="chart-subtitle">Accuracy by topic</p>
                             <div className="chart-wrapper">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={analytics.topicData}>
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            stroke="rgba(255,255,255,0.08)"
-                                        />
-                                        <XAxis
-                                            dataKey="topic"
-                                            stroke="rgba(255,255,255,0.4)"
-                                            fontSize={12}
-                                        />
-                                        <YAxis stroke="rgba(255,255,255,0.4)" fontSize={12} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                                        <XAxis dataKey="topic" stroke={chartTheme.axis} fontSize={12} />
+                                        <YAxis stroke={chartTheme.axis} fontSize={12} />
                                         <Tooltip
                                             contentStyle={{
-                                                background: "#1e1b4b",
-                                                border: "1px solid rgba(139,92,246,0.3)",
-                                                borderRadius: 8,
+                                                background: chartTheme.tooltipBackground,
+                                                border: chartTheme.tooltipBorder,
+                                                borderRadius: 12,
                                                 color: "#fff",
                                             }}
                                         />
                                         <Legend />
-                                        <Bar
-                                            dataKey="accuracy"
-                                            fill="#7c3aed"
-                                            radius={[4, 4, 0, 0]}
-                                        />
+                                        <Bar dataKey="accuracy" fill="#5cd6ff" radius={[8, 8, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        {/* Question Difficulty */}
                         <div className="chart-card">
                             <h3>Question Difficulty</h3>
-                            <p className="chart-subtitle">
-                                Distribution of attempted questions
-                            </p>
+                            <p className="chart-subtitle">Distribution of attempted questions</p>
                             <div className="chart-wrapper">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -831,7 +801,7 @@ export default function Dashboard() {
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={50}
-                                            outerRadius={80}
+                                            outerRadius={84}
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
@@ -839,17 +809,12 @@ export default function Dashboard() {
                                                 <Cell key={idx} fill={PIE_COLORS[idx]} />
                                             ))}
                                         </Pie>
-                                        <Legend
-                                            wrapperStyle={{
-                                                color: "rgba(255,255,255,0.7)",
-                                                fontSize: 12,
-                                            }}
-                                        />
+                                        <Legend wrapperStyle={{ color: "rgba(226,232,240,0.7)", fontSize: 12 }} />
                                         <Tooltip
                                             contentStyle={{
-                                                background: "#1e1b4b",
-                                                border: "1px solid rgba(139,92,246,0.3)",
-                                                borderRadius: 8,
+                                                background: chartTheme.tooltipBackground,
+                                                border: chartTheme.tooltipBorder,
+                                                borderRadius: 12,
                                                 color: "#fff",
                                             }}
                                         />
@@ -858,36 +823,24 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Time Spent */}
                         <div className="chart-card">
                             <h3>Time Spent</h3>
                             <p className="chart-subtitle">Estimated minutes per topic</p>
                             <div className="chart-wrapper">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={analytics.timeSpentData}>
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            stroke="rgba(255,255,255,0.08)"
-                                        />
-                                        <XAxis
-                                            dataKey="topic"
-                                            stroke="rgba(255,255,255,0.4)"
-                                            fontSize={12}
-                                        />
-                                        <YAxis stroke="rgba(255,255,255,0.4)" fontSize={12} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                                        <XAxis dataKey="topic" stroke={chartTheme.axis} fontSize={12} />
+                                        <YAxis stroke={chartTheme.axis} fontSize={12} />
                                         <Tooltip
                                             contentStyle={{
-                                                background: "#1e1b4b",
-                                                border: "1px solid rgba(139,92,246,0.3)",
-                                                borderRadius: 8,
+                                                background: chartTheme.tooltipBackground,
+                                                border: chartTheme.tooltipBorder,
+                                                borderRadius: 12,
                                                 color: "#fff",
                                             }}
                                         />
-                                        <Bar
-                                            dataKey="minutes"
-                                            fill="#e040a0"
-                                            radius={[4, 4, 0, 0]}
-                                        />
+                                        <Bar dataKey="minutes" fill="#ff8a3d" radius={[8, 8, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>

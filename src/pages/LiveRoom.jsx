@@ -169,19 +169,42 @@ export default function LiveRoom() {
             recordedChunksRef.current = [];
             const mr = new MediaRecorder(activeRecordStreamRef.current, { mimeType: 'video/webm' });
             mr.ondataavailable = e => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
-            mr.onstop = saveRecordingToDB;
+            mr.onstop = saveRecordingToServer;
             mr.start(500); // chunk every 500ms
             mediaRecorderRef.current = mr;
             setIsRecording(true);
         }
     };
 
-    const saveRecordingToDB = () => {
+    const saveRecordingToServer = async () => {
         if (recordedChunksRef.current.length === 0) return;
 
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-        const request = indexedDB.open('mindforge_stream_db', 1);
 
+        try {
+            const response = await fetch('/api/recordings', {
+                method: 'POST',
+                headers: {
+                    'X-Subject': encodeURIComponent(sessionData?.subject || 'Undefined'),
+                    'X-Topic': encodeURIComponent(sessionData?.topic || 'Recorded Session')
+                },
+                body: blob
+            });
+
+            if (response.ok) {
+                alert("Recording shared and saved to dashboard successfully!");
+            } else {
+                throw new Error("Upload failed");
+            }
+        } catch (err) {
+            console.error("Recording upload failed:", err);
+            // Fallback to local storage if server is down (though it shouldn't be)
+            saveRecordingToDB(blob);
+        }
+    };
+
+    const saveRecordingToDB = (blob) => {
+        const request = indexedDB.open('mindforge_stream_db', 1);
         request.onupgradeneeded = e => {
             const db = e.target.result;
             if (!db.objectStoreNames.contains('recordings')) {
@@ -193,18 +216,14 @@ export default function LiveRoom() {
             const db = e.target.result;
             const tx = db.transaction('recordings', 'readwrite');
             const store = tx.objectStore('recordings');
-            const putReq = store.put({
+            store.put({
                 id: Date.now(),
                 subject: sessionData?.subject || 'Undefined',
                 topic: sessionData?.topic || 'Recorded Session',
                 date: new Date().toLocaleDateString(),
                 blob: blob
             });
-            putReq.onsuccess = () => {
-                alert("Recording saved to dashboard successfully!");
-                db.close();
-            };
-            putReq.onerror = () => db.close();
+            tx.oncomplete = () => db.close();
         };
     };
 

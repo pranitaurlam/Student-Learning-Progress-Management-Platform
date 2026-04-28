@@ -17,6 +17,7 @@ import LiveRoom from "./pages/LiveRoom";
 import Certificates from './pages/Certificates';
 import Staff from './pages/Staff';
 import AttendanceForm from './pages/AttendanceForm';
+import StudyTimer from './pages/StudyTimer';
 import './index.css';
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/certificates" element={<Certificates />} />
         <Route path="/staff" element={<Staff />} />
         <Route path="/attendance" element={<AttendanceForm />} />
+        <Route path="/focus" element={<StudyTimer />} />
       </Routes>
     </BrowserRouter>
   );

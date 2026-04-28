@@ -142,6 +142,12 @@ export default function MockTestRunner() {
       prev.push(record);
       localStorage.setItem('mindforge_test_history', JSON.stringify(prev));
 
+      fetch('/api/mock-results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      }).catch(err => console.error('Failed to store mock result in SQL:', err));
+
       // ── LOG MISTAKES TO BACKEND ──
       const mistakes = mcqQs.filter(q => {
         const idx = questions.indexOf(q);

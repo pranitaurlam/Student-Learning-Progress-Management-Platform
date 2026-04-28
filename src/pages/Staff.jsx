@@ -7,6 +7,19 @@ import {
 } from 'react-icons/fa';
 import { IoArrowBack, IoSend } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
+import {
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    PieChart,
+    Pie,
+    Cell,
+    Legend,
+} from 'recharts';
 import './Staff.css';
 
 const SUBJECTS = ['AI/ML', 'DSA', 'Web Dev', 'DBMS', 'Python'];
@@ -31,14 +44,14 @@ const initAssignments = [
 ];
 
 const TABS = [
-    { key: 'timetable', label: 'Timetable', icon: FaCalendarAlt, color: '#a78bfa' },
-    { key: 'announcements', label: 'Announcements', icon: FaBullhorn, color: '#f472b6' },
+    { key: 'timetable', label: 'Timetable', icon: FaCalendarAlt, color: '#5cd6ff' },
+    { key: 'announcements', label: 'Announcements', icon: FaBullhorn, color: '#ff6f91' },
     { key: 'assignments', label: 'Assignments', icon: FaBookOpen, color: '#34d399' },
-    { key: 'messages', label: 'Messages', icon: FaComments, color: '#ec4899' },
-    { key: 'scores', label: 'Student Scores', icon: FaTrophy, color: '#fbbf24' },
-    { key: 'materials', label: 'Study Material', icon: FaFolderOpen, color: '#60a5fa' },
-    { key: 'recordings', label: 'Recordings', icon: FaVideo, color: '#ef4444' },
-    { key: 'attendance', label: 'Attendance', icon: FaQrcode, color: '#f87171' },
+    { key: 'messages', label: 'Messages', icon: FaComments, color: '#f7b94c' },
+    { key: 'scores', label: 'Student Scores', icon: FaTrophy, color: '#f7b94c' },
+    { key: 'materials', label: 'Study Material', icon: FaFolderOpen, color: '#5cd6ff' },
+    { key: 'recordings', label: 'Recordings', icon: FaVideo, color: '#fb7185' },
+    { key: 'attendance', label: 'Attendance', icon: FaQrcode, color: '#ff8a3d' },
 ];
 
 const SUBJECT_COLORS = {
@@ -49,9 +62,147 @@ const SUBJECT_COLORS = {
     'Python': '#34d399',
 };
 
+const SCORE_CSV_STORAGE_KEY = 'mindforge_student_scores_csv';
+const SCORE_CHART_COLORS = ['#5cd6ff', '#f7b94c', '#34d399', '#ff6f91', '#ff8a3d'];
+
+const parseCsvText = (text) => {
+    const lines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map((header) => header.trim().toLowerCase());
+
+    return lines.slice(1).map((line, index) => {
+        const values = line.split(',').map((value) => value.trim());
+        const row = headers.reduce((acc, header, headerIndex) => {
+            acc[header] = values[headerIndex] ?? '';
+            return acc;
+        }, {});
+
+        return {
+            id: `${Date.now()}-${index}`,
+            student: row.student || row.name || `Student ${index + 1}`,
+            subject: row.subject || 'General',
+            score: Number(row.score || row.marks || 0),
+            attendance: Number(row.attendance || row.percentage || 0),
+            tests: Number(row.tests || row.testcount || 0),
+        };
+    });
+};
+
+const buildCsvInsights = (rows) => {
+    const byStudent = new Map();
+    const bySubject = new Map();
+
+    rows.forEach((row) => {
+        const studentKey = row.student;
+        const subjectKey = row.subject;
+
+        if (!byStudent.has(studentKey)) {
+            byStudent.set(studentKey, { student: studentKey, scoreSum: 0, attendanceSum: 0, testsSum: 0, count: 0 });
+        }
+        if (!bySubject.has(subjectKey)) {
+            bySubject.set(subjectKey, { name: subjectKey, value: 0 });
+        }
+
+        const studentEntry = byStudent.get(studentKey);
+        studentEntry.scoreSum += row.score;
+        studentEntry.attendanceSum += row.attendance;
+        studentEntry.testsSum += row.tests;
+        studentEntry.count += 1;
+
+        bySubject.get(subjectKey).value += 1;
+    });
+
+    const studentPerformance = Array.from(byStudent.values()).map((entry) => ({
+        student: entry.student,
+        avgScore: Math.round(entry.scoreSum / entry.count),
+        avgAttendance: Math.round(entry.attendanceSum / entry.count),
+        tests: entry.testsSum,
+    }));
+
+    return {
+        studentPerformance,
+        subjectDistribution: Array.from(bySubject.values()),
+    };
+};
+
+const buildMockInsights = (rows) => {
+    const byStudent = new Map();
+    const bySubject = new Map();
+
+    rows.forEach((row, index) => {
+        const student = row.studentName || `Student ${index + 1}`;
+        const subject = row.subjectName || row.subject || 'General';
+
+        if (!byStudent.has(student)) {
+            byStudent.set(student, { student, accuracySum: 0, count: 0, marksSum: 0 });
+        }
+        if (!bySubject.has(subject)) {
+            bySubject.set(subject, { name: subject, value: 0 });
+        }
+
+        const studentEntry = byStudent.get(student);
+        studentEntry.accuracySum += Number(row.accuracy || 0);
+        studentEntry.marksSum += Number(row.mcqCorrect || 0);
+        studentEntry.count += 1;
+        bySubject.get(subject).value += 1;
+    });
+
+    return {
+        byStudent: Array.from(byStudent.values()).map((entry) => ({
+            student: entry.student,
+            avgAccuracy: Math.round(entry.accuracySum / entry.count),
+            avgMarks: Math.round(entry.marksSum / entry.count),
+        })),
+        bySubject: Array.from(bySubject.values()),
+    };
+};
+
+const buildPracticeInsights = (rows) => {
+    const bySubject = new Map();
+    const byStudent = new Map();
+
+    rows.forEach((row, index) => {
+        const subject = row.subject || 'General';
+        const student = row.studentName || `Student ${index + 1}`;
+
+        if (!bySubject.has(subject)) {
+            bySubject.set(subject, { subject, correct: 0, wrong: 0 });
+        }
+        if (!byStudent.has(student)) {
+            byStudent.set(student, { name: student, value: 0 });
+        }
+
+        if (row.correct) {
+            bySubject.get(subject).correct += 1;
+        } else {
+            bySubject.get(subject).wrong += 1;
+        }
+        byStudent.get(student).value += 1;
+    });
+
+    return {
+        bySubject: Array.from(bySubject.values()),
+        byStudent: Array.from(byStudent.values()),
+    };
+};
+
 export default function Staff() {
+    const getMentorInitials = (name) => {
+        if (!name) return 'MT';
+        const cleanName = name.replace(/^Prof\.\s*/, '');
+        const parts = cleanName.trim().split(/\s+/);
+        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        return cleanName.substring(0, 2).toUpperCase();
+    };
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('timetable');
+    const [mockHistory, setMockHistory] = useState([]);
+    const [practiceHistory, setPracticeHistory] = useState([]);
 
     /* ── Student Doubts (Messages) ── */
     const STORAGE_KEY = 'mindforge_messages';
@@ -214,13 +365,42 @@ export default function Staff() {
         setAsnEdit(null);
     };
 
-    /* ── Scores (read-only from localStorage) ── */
-    const mockHistory = (() => {
-        try { return JSON.parse(localStorage.getItem('mindforge_test_history') || '[]'); } catch { return []; }
-    })();
-    const practiceHistory = (() => {
-        try { return JSON.parse(localStorage.getItem('mindforge_practice_history') || '[]'); } catch { return []; }
-    })();
+    /* ── Scores (SQL-backed) ── */
+    useEffect(() => {
+        if (activeTab !== 'scores') return;
+
+        const loadResults = async () => {
+            try {
+                const [mockRes, practiceRes] = await Promise.all([
+                    fetch('/api/mock-results'),
+                    fetch('/api/practice-results'),
+                ]);
+
+                if (mockRes.ok) {
+                    setMockHistory(await mockRes.json());
+                }
+                if (practiceRes.ok) {
+                    setPracticeHistory(await practiceRes.json());
+                }
+            } catch (e) {
+                console.error('Failed to load SQL results:', e);
+            }
+        };
+
+        loadResults();
+    }, [activeTab]);
+
+    const [csvScores, setCsvScores] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem(SCORE_CSV_STORAGE_KEY) || '[]');
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        localStorage.setItem(SCORE_CSV_STORAGE_KEY, JSON.stringify(csvScores));
+    }, [csvScores]);
 
     /* ── Study Materials ── */
     const [materials, setMaterials] = useState([]);
@@ -252,65 +432,65 @@ export default function Staff() {
     const [recordings, setRecordings] = useState([]);
     useEffect(() => {
         if (activeTab === 'recordings') {
-            const loadRecordings = () => {
-                const request = indexedDB.open('mindforge_stream_db', 1);
-                request.onsuccess = e => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('recordings')) {
-                        db.close();
-                        return;
+            const loadRecordings = async () => {
+                try {
+                    const res = await fetch('/api/recordings');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setRecordings(data.sort((a, b) => b.id - a.id));
                     }
-                    const tx = db.transaction('recordings', 'readonly');
-                    const store = tx.objectStore('recordings');
-                    const getReq = store.getAll();
-                    getReq.onsuccess = () => {
-                        const recs = (getReq.result || []).sort((a, b) => b.id - a.id);
-                        const mappedRecs = recs.map(r => ({ ...r, videoUrl: URL.createObjectURL(r.blob) }));
-                        setRecordings(mappedRecs);
-                        db.close();
-                    };
-                    getReq.onerror = () => db.close();
-                };
+                } catch (e) {
+                    console.error("Failed to load recordings:", e);
+                }
             };
             loadRecordings();
         }
     }, [activeTab]);
 
-    const deleteRecording = (id) => {
+    const deleteRecording = async (id) => {
         if (!window.confirm("Are you sure you want to delete this recording? It will be removed from the student dashboard entirely.")) return;
 
-        const request = indexedDB.open('mindforge_stream_db', 1);
-        request.onsuccess = e => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('recordings')) { db.close(); return; }
-            const tx = db.transaction('recordings', 'readwrite');
-            const store = tx.objectStore('recordings');
-            const delReq = store.delete(id);
-            delReq.onsuccess = () => {
+        try {
+            const res = await fetch(`/api/recordings/${id}`, { method: 'DELETE' });
+            if (res.ok) {
                 setRecordings(p => p.filter(r => r.id !== id));
-                db.close();
-            };
-            delReq.onerror = () => db.close();
-        };
+            }
+        } catch (e) {
+            console.error("Failed to delete recording:", e);
+        }
     };
 
     /* ── Attendance ── */
     const [attSession, setAttSession] = useState({ subject: '', label: '' });
     const [qrValue, setQrValue] = useState('');
-    const [hostIp, setHostIp] = useState('10.20.16.52'); // Default to current known network IP
+    const [hostIp, setHostIp] = useState('');
     const [qrExpiry, setQrExpiry] = useState(null);
     const [countdown, setCountdown] = useState(0);
     const [attLog, setAttLog] = useState([]);
     const timerRef = useRef(null);
     const QR_DURATION = 30; // 30 seconds
 
-    const generateQR = () => {
-        clearInterval(timerRef.current);
-        let baseUrl = window.location.origin;
-        if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
-            baseUrl = baseUrl.replace('localhost', hostIp).replace('127.0.0.1', hostIp);
+    const buildAttendanceOrigin = () => {
+        const rawHost = hostIp.trim();
+        const protocol = window.location.protocol;
+        const currentPort = window.location.port;
+
+        if (!rawHost) {
+            return window.location.origin;
         }
 
+        if (/^https?:\/\//i.test(rawHost)) {
+            return rawHost.replace(/\/$/, '');
+        }
+
+        const hasExplicitPort = /:\d+$/.test(rawHost);
+        const hostWithPort = hasExplicitPort || !currentPort ? rawHost : `${rawHost}:${currentPort}`;
+        return `${protocol}//${hostWithPort}`;
+    };
+
+    const generateQR = () => {
+        clearInterval(timerRef.current);
+        const baseUrl = buildAttendanceOrigin();
         const sessionId = `sess-${Date.now()}`;
         const query = `?subject=${encodeURIComponent(attSession.subject || 'General')}&label=${encodeURIComponent(attSession.label || 'General')}&session=${sessionId}`;
         const token = `${baseUrl}/attendance${query}`;
@@ -329,6 +509,23 @@ export default function Staff() {
         }, 1000);
     };
 
+    useEffect(() => {
+        const loadNetworkInfo = async () => {
+            try {
+                const res = await fetch('/api/network-info');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data?.preferredHost) {
+                    setHostIp((prev) => prev || data.preferredHost);
+                }
+            } catch (e) {
+                console.error('Failed to load network info:', e);
+            }
+        };
+
+        loadNetworkInfo();
+    }, []);
+
     // Auto-generate QR when entering tab or changing session info
     useEffect(() => {
         if (activeTab === 'attendance') {
@@ -338,6 +535,12 @@ export default function Staff() {
         }
         return () => clearInterval(timerRef.current);
     }, [activeTab, attSession.subject]); // only regenerate on subject change or tab enter, not every keystroke
+
+    useEffect(() => {
+        if (activeTab === 'attendance' && hostIp.trim()) {
+            generateQR();
+        }
+    }, [hostIp]);
 
     // Listen for real student scans from other devices
     useEffect(() => {
@@ -372,6 +575,27 @@ export default function Staff() {
 
     useEffect(() => () => clearInterval(timerRef.current), []);
 
+    const totalLearnerSignals = messagesState.length + assignments.length + timetable.length;
+    const pendingReplies = messagesState.filter((msg) => msg.unreadStatus?.staff).length;
+    const liveOverview = [
+        `${timetable.length} sessions scheduled`,
+        `${assignments.length} active assignments`,
+        `${pendingReplies} pending replies`,
+    ];
+    const csvInsights = buildCsvInsights(csvScores);
+    const mockInsights = buildMockInsights(mockHistory);
+    const practiceInsights = buildPracticeInsights(practiceHistory);
+
+    const handleScoresCsvUpload = (file) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const parsed = parseCsvText(event.target?.result || '');
+            setCsvScores(parsed);
+        };
+        reader.readAsText(file);
+    };
+
     return (
         <div className="staff-page">
             {/* ── Top Header ── */}
@@ -385,15 +609,20 @@ export default function Staff() {
                             <div>
                                 <div className="staff-role-badge">Staff Portal</div>
                                 <h1 className="staff-hero-title">MindForge Control Center</h1>
-                                <p className="staff-hero-sub">Manage your academy's content and schedule.</p>
+                                <p className="staff-hero-sub">Manage classes, student signals, resources, and live support from one focused mentor workspace.</p>
+                                <div className="staff-hero-pills">
+                                    {liveOverview.map((item) => (
+                                        <span key={item} className="staff-hero-pill">{item}</span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                         <div className="staff-hero-stats">
                             <div className="hero-stat">
                                 <FaUsers className="hero-stat-icon" />
                                 <div>
-                                    <div className="hero-stat-val">1,248</div>
-                                    <div className="hero-stat-label">Students</div>
+                                    <div className="hero-stat-val">{totalLearnerSignals}</div>
+                                    <div className="hero-stat-label">Active signals</div>
                                 </div>
                             </div>
                             <div className="hero-stat">
@@ -406,8 +635,8 @@ export default function Staff() {
                             <div className="hero-stat">
                                 <FaClock className="hero-stat-icon" />
                                 <div>
-                                    <div className="hero-stat-val">{timetable.length}</div>
-                                    <div className="hero-stat-label">Sessions</div>
+                                    <div className="hero-stat-val">{pendingReplies}</div>
+                                    <div className="hero-stat-label">Need replies</div>
                                 </div>
                             </div>
                         </div>
@@ -673,9 +902,162 @@ export default function Staff() {
                             <p>View student performance from Mock Tests and Practice Questions.</p>
                         </div>
 
+                        <div className="add-card">
+                            <div className="add-card-title"><FaPlus /> Student CSV Import</div>
+                            <div className="scores-upload-grid">
+                                <label className="scores-upload-dropzone" htmlFor="scores-csv-input">
+                                    <FaFileAlt className="dropzone-icon" />
+                                    <p className="dropzone-label">Upload student scores CSV</p>
+                                    <span className="dropzone-sub">Expected columns: student, subject, score, attendance, tests</span>
+                                </label>
+                                <input
+                                    id="scores-csv-input"
+                                    type="file"
+                                    accept=".csv"
+                                    className="scores-csv-input"
+                                    onChange={(e) => handleScoresCsvUpload(e.target.files?.[0])}
+                                />
+                                <div className="scores-upload-actions">
+                                    <a href="/sample-student-scores.csv" download className="primary-btn" style={{ '--btn-color': '#5cd6ff', '--btn-hover': '#38bdf8' }}>
+                                        <FaDownload /> Download Sample CSV
+                                    </a>
+                                    {csvScores.length > 0 && (
+                                        <button
+                                            className="primary-btn"
+                                            style={{ '--btn-color': '#ff6f91', '--btn-hover': '#fb7185' }}
+                                            onClick={() => setCsvScores([])}
+                                        >
+                                            <FaTrash /> Clear Imported Data
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {csvScores.length > 0 && (
+                            <div className="scores-chart-grid">
+                                <div className="chart-card staff-chart-card">
+                                    <div className="scores-section-title"><FaChartBar className="score-sec-icon blue" /> Student Average Score</div>
+                                    <div className="staff-chart-wrap">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={csvInsights.studentPerformance}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.12)" />
+                                                <XAxis dataKey="student" stroke="rgba(226,232,240,0.62)" fontSize={12} />
+                                                <YAxis stroke="rgba(226,232,240,0.62)" fontSize={12} />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        background: '#0f1b2f',
+                                                        border: '1px solid rgba(247,185,76,0.16)',
+                                                        borderRadius: 12,
+                                                        color: '#fff',
+                                                    }}
+                                                />
+                                                <Legend />
+                                                <Bar dataKey="avgScore" fill="#5cd6ff" radius={[8, 8, 0, 0]} />
+                                                <Bar dataKey="avgAttendance" fill="#f7b94c" radius={[8, 8, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                <div className="chart-card staff-chart-card">
+                                    <div className="scores-section-title"><FaTrophy className="score-sec-icon gold" /> Subject Distribution</div>
+                                    <div className="staff-chart-wrap">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={csvInsights.subjectDistribution}
+                                                    dataKey="value"
+                                                    nameKey="name"
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={54}
+                                                    outerRadius={88}
+                                                    paddingAngle={4}
+                                                >
+                                                    {csvInsights.subjectDistribution.map((entry, index) => (
+                                                        <Cell key={entry.name} fill={SCORE_CHART_COLORS[index % SCORE_CHART_COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Legend wrapperStyle={{ color: 'rgba(226,232,240,0.7)', fontSize: 12 }} />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        background: '#0f1b2f',
+                                                        border: '1px solid rgba(247,185,76,0.16)',
+                                                        borderRadius: 12,
+                                                        color: '#fff',
+                                                    }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Mock Test Scores */}
                         <div className="scores-section">
                             <div className="scores-section-title"><FaTrophy className="score-sec-icon gold" /> Mock Test Results</div>
+                            {mockHistory.length > 0 && (
+                                <div className="scores-chart-grid scores-section-charts">
+                                    <div className="chart-card staff-chart-card">
+                                        <div className="scores-section-title"><FaChartBar className="score-sec-icon gold" /> Mock Accuracy by Student</div>
+                                        <div className="staff-chart-wrap">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={mockInsights.byStudent}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.12)" />
+                                                    <XAxis dataKey="student" stroke="rgba(226,232,240,0.62)" fontSize={12} />
+                                                    <YAxis stroke="rgba(226,232,240,0.62)" fontSize={12} />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            background: '#0f1b2f',
+                                                            border: '1px solid rgba(247,185,76,0.16)',
+                                                            borderRadius: 12,
+                                                            color: '#fff',
+                                                        }}
+                                                    />
+                                                    <Legend />
+                                                    <Bar dataKey="avgAccuracy" fill="#f7b94c" radius={[8, 8, 0, 0]} />
+                                                    <Bar dataKey="avgMarks" fill="#5cd6ff" radius={[8, 8, 0, 0]} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+
+                                    <div className="chart-card staff-chart-card">
+                                        <div className="scores-section-title"><FaTrophy className="score-sec-icon gold" /> Mock Attempts by Subject</div>
+                                        <div className="staff-chart-wrap">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={mockInsights.bySubject}
+                                                        dataKey="value"
+                                                        nameKey="name"
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={54}
+                                                        outerRadius={88}
+                                                        paddingAngle={4}
+                                                    >
+                                                        {mockInsights.bySubject.map((entry, index) => (
+                                                            <Cell key={entry.name} fill={SCORE_CHART_COLORS[index % SCORE_CHART_COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Legend wrapperStyle={{ color: 'rgba(226,232,240,0.7)', fontSize: 12 }} />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            background: '#0f1b2f',
+                                                            border: '1px solid rgba(247,185,76,0.16)',
+                                                            borderRadius: 12,
+                                                            color: '#fff',
+                                                        }}
+                                                    />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className="assignments-table">
                                 <div className="table-head" style={{ gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr 1fr 80px' }}>
                                     <span>Date</span>
@@ -706,6 +1088,66 @@ export default function Staff() {
                         {/* Practice Scores */}
                         <div className="scores-section">
                             <div className="scores-section-title"><FaStar className="score-sec-icon blue" /> Practice Question Attempts</div>
+                            {practiceHistory.length > 0 && (
+                                <div className="scores-chart-grid scores-section-charts">
+                                    <div className="chart-card staff-chart-card">
+                                        <div className="scores-section-title"><FaChartBar className="score-sec-icon blue" /> Practice Correct vs Wrong</div>
+                                        <div className="staff-chart-wrap">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={practiceInsights.bySubject}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.12)" />
+                                                    <XAxis dataKey="subject" stroke="rgba(226,232,240,0.62)" fontSize={12} />
+                                                    <YAxis stroke="rgba(226,232,240,0.62)" fontSize={12} />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            background: '#0f1b2f',
+                                                            border: '1px solid rgba(247,185,76,0.16)',
+                                                            borderRadius: 12,
+                                                            color: '#fff',
+                                                        }}
+                                                    />
+                                                    <Legend />
+                                                    <Bar dataKey="correct" fill="#34d399" radius={[8, 8, 0, 0]} />
+                                                    <Bar dataKey="wrong" fill="#ff6f91" radius={[8, 8, 0, 0]} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+
+                                    <div className="chart-card staff-chart-card">
+                                        <div className="scores-section-title"><FaUsers className="score-sec-icon blue" /> Practice Attempts by Student</div>
+                                        <div className="staff-chart-wrap">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={practiceInsights.byStudent}
+                                                        dataKey="value"
+                                                        nameKey="name"
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={54}
+                                                        outerRadius={88}
+                                                        paddingAngle={4}
+                                                    >
+                                                        {practiceInsights.byStudent.map((entry, index) => (
+                                                            <Cell key={entry.name} fill={SCORE_CHART_COLORS[index % SCORE_CHART_COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Legend wrapperStyle={{ color: 'rgba(226,232,240,0.7)', fontSize: 12 }} />
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            background: '#0f1b2f',
+                                                            border: '1px solid rgba(247,185,76,0.16)',
+                                                            borderRadius: 12,
+                                                            color: '#fff',
+                                                        }}
+                                                    />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className="assignments-table">
                                 <div className="table-head" style={{ gridTemplateColumns: '1.2fr 1.8fr 1fr 1fr 1fr' }}>
                                     <span>Student</span>
@@ -730,6 +1172,30 @@ export default function Staff() {
                                 ))}
                             </div>
                         </div>
+
+                        {csvScores.length > 0 && (
+                            <div className="scores-section">
+                                <div className="scores-section-title"><FaUsers className="score-sec-icon blue" /> Imported CSV Student Scores</div>
+                                <div className="assignments-table">
+                                    <div className="table-head" style={{ gridTemplateColumns: '1.3fr 1fr 0.8fr 0.8fr 0.8fr' }}>
+                                        <span>Student</span>
+                                        <span>Subject</span>
+                                        <span>Score</span>
+                                        <span>Attendance</span>
+                                        <span>Tests</span>
+                                    </div>
+                                    {csvScores.map((row) => (
+                                        <div key={row.id} className="table-row" style={{ gridTemplateColumns: '1.3fr 1fr 0.8fr 0.8fr 0.8fr' }}>
+                                            <span className="row-title" style={{ fontWeight: 600 }}>{row.student}</span>
+                                            <span><span className="subj-pill" style={{ '--c': SUBJECT_COLORS[row.subject] || '#5cd6ff' }}>{row.subject}</span></span>
+                                            <span className="row-due">{row.score}</span>
+                                            <span className="row-due">{row.attendance}%</span>
+                                            <span className="row-due">{row.tests}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
                 {/* ────── STUDY MATERIAL ────── */}
@@ -855,7 +1321,7 @@ export default function Staff() {
                                         <strong className="mat-title">{m.subject} - {m.topic}</strong>
                                         <div className="mat-meta">
                                             <span className="subj-pill" style={{ '--c': SUBJECT_COLORS[m.subject] || '#ef4444' }}>{m.subject || "Unknown"}</span>
-                                            <span className="row-due">{(m.blob.size / (1024 * 1024)).toFixed(2)} MB</span>
+                                            <span className="row-due">{m.size ? (m.size / (1024 * 1024)).toFixed(2) : '0.00'} MB</span>
                                             <span className="row-due">Recorded {m.date}</span>
                                         </div>
                                     </div>
@@ -880,8 +1346,8 @@ export default function Staff() {
                             <h2>Messages</h2>
                             <p>Read and reply to messages sent by students.</p>
                         </div>
-                        <div className="messages-layout staff-messages-theme" style={{ display: 'flex', height: 'calc(100vh - 160px)', minHeight: 650, width: '100%', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', transition: 'all 0.3s ease' }}>
-                            <div className={`messages-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`} style={{ width: '30%', minWidth: 280, borderRight: '1px solid rgba(0,0,0,0.05)' }}>
+                        <div className="messages-layout staff-messages-theme staff-message-shell">
+                            <div className={`messages-sidebar staff-message-sidebar ${activeDoubtId ? 'hide-mobile' : ''}`}>
                                 <div className="messages-list">
                                     {messagesState.map((m) => (
                                         <div
@@ -889,10 +1355,10 @@ export default function Staff() {
                                             className={`message-item ${m.unreadStatus?.staff ? 'unread' : ''} ${activeDoubtId === m.id ? 'active' : ''}`}
                                             onClick={() => openDoubt(m.id)}
                                         >
-                                            <div className={`message-avatar ${m.color}`}>{m.studentInitials || 'ST'}</div>
+                                            <div className={`message-avatar ${m.color}`}>{getMentorInitials(m.sender)}</div>
                                             <div className="message-info">
                                                 <div className="message-header">
-                                                    <span className="message-sender">{m.studentName || 'Student'} <span style={{ fontSize: '0.7em', color: 'gray' }}>to {m.sender}</span></span>
+                                                    <span className="message-sender">{m.sender} <span style={{ fontSize: '0.7em', color: 'gray' }}>from {m.studentName || 'Student'}</span></span>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                                         <span className="message-time">{m.time}</span>
                                                         {!unlockedIds.includes(m.id) && <FaLock size={12} style={{ color: '#9ca3af' }} />}
@@ -908,11 +1374,11 @@ export default function Staff() {
                                     ))}
                                 </div>
                             </div>
-                            <div className={`chat-window ${activeDoubtId ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', position: 'relative' }}>
+                            <div className={`chat-window staff-chat-window ${activeDoubtId ? 'show' : ''}`}>
                                 {!activeDoubt ? (
-                                    <div className="chat-empty" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.7 }}>
-                                        <div className="chat-empty-icon" style={{ fontSize: 40, opacity: 0.2 }}>💬</div>
-                                        <h2 style={{ color: '#9ca3af' }}>Select a conversation</h2>
+                                    <div className="chat-empty staff-chat-empty">
+                                        <div className="chat-empty-icon staff-chat-empty-icon">💬</div>
+                                        <h2>Select a conversation</h2>
                                     </div>
                                 ) : (
                                     <>
@@ -920,7 +1386,7 @@ export default function Staff() {
                                             <button className="back-btn" onClick={() => setActiveDoubtId(null)}><IoArrowBack /></button>
                                             <div className="chat-header-info">
                                                 <span className="chat-name">{activeDoubt.studentName || 'Student Chat'}</span>
-                                                <span className="chat-status" style={{ color: '#6b7280', fontSize: 12 }}>You ({activeDoubt.sender}) replying to student</span>
+                                                <span className="chat-status">You ({activeDoubt.sender}) replying to student</span>
                                             </div>
                                         </div>
                                         <div className="chat-messages">
@@ -934,7 +1400,7 @@ export default function Staff() {
                                             ))}
                                             <div ref={messagesEndRef} />
                                         </div>
-                                        <div className="chat-input-bar" style={{ display: 'flex', alignItems: 'flex-end', gap: 12, padding: '16px 24px', flexShrink: 0 }}>
+                                        <div className="chat-input-bar staff-chat-input-bar">
                                             <textarea
                                                 className="chat-input"
                                                 placeholder={`Type your reply to ${activeDoubt.studentName || 'this student'}...`}
@@ -942,10 +1408,9 @@ export default function Staff() {
                                                 onChange={(e) => setReplyText(e.target.value)}
                                                 onKeyDown={handleReplyKeyDown}
                                                 rows={1}
-                                                style={{ flex: 1, resize: 'none', padding: '12px 20px', borderRadius: 24, border: '1px solid #d1d5db', outline: 'none', fontSize: 15, transition: 'border-color 0.3s ease', minHeight: 48, maxHeight: 120, overflowY: 'auto' }}
                                             />
-                                            <button className="send-btn" onClick={sendReply} disabled={!replyText.trim()} style={{ background: '#ec4899', color: '#fff', border: 'none', width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s ease', opacity: replyText.trim() ? 1 : 0.5, transform: replyText.trim() ? 'scale(1)' : 'scale(0.98)', boxShadow: replyText.trim() ? '0 4px 15px rgba(236,72,153,0.4)' : 'none', flexShrink: 0 }}>
-                                                <IoSend size={18} style={{ marginLeft: 3 }} />
+                                            <button className="send-btn staff-send-btn" onClick={sendReply} disabled={!replyText.trim()}>
+                                                <IoSend size={18} />
                                             </button>
                                         </div>
                                     </>
@@ -984,15 +1449,15 @@ export default function Staff() {
                                         />
                                     </div>
                                     <div className="form-field form-field-full" style={{ width: '100%', marginTop: 10 }}>
-                                        <label style={{ color: '#ec4899' }}>Network IP for QR (Important for mobile users!)</label>
+                                        <label className="field-label-warn">Network IP for QR (Important for mobile users!)</label>
                                         <input
                                             placeholder="192.168.x.x"
                                             value={hostIp}
                                             onChange={e => setHostIp(e.target.value)}
                                             onBlur={generateQR}
-                                            style={{ borderColor: '#fbcfe8' }}
+                                            className="field-input-warn"
                                         />
-                                        <span style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: 4 }}>
+                                        <span className="field-help-text">
                                             If you opened localhost on your PC but are scanning from a phone, set this to your PC's Wi-Fi IP so the phone can connect.
                                         </span>
                                     </div>
@@ -1009,17 +1474,17 @@ export default function Staff() {
                                                     <div className="progress-bar-fill" style={{ width: `${(countdown / QR_DURATION) * 100}%` }} />
                                                 </div>
                                             </div>
-                                            <button className="primary-btn" style={{ '--btn-color': '#f87171', '--btn-hover': '#dc2626', width: '100%', justifyContent: 'center', marginTop: 15 }} onClick={() => setQrValue('')}>
+                                            <button className="primary-btn qr-stop-btn" style={{ '--btn-color': '#ff8a3d', '--btn-hover': '#f97316' }} onClick={() => setQrValue('')}>
                                                 Stop Scanning Early
                                             </button>
                                         </div>
                                     ) : (
                                         <div className="qr-placeholder">
-                                            <div style={{ opacity: 0.15, marginBottom: 15, pointerEvents: 'none', filter: 'blur(2px)' }}>
+                                            <div className="qr-placeholder-image">
                                                 <img src="https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=placeholder" alt="Placeholder QR" width={200} height={200} style={{ display: 'block' }} />
                                             </div>
-                                            <p style={{ fontWeight: '500', color: '#4b5563' }}>Scanner is idle</p>
-                                            <button className="primary-btn" style={{ '--btn-color': '#f87171', '--btn-hover': '#dc2626', marginTop: 15 }} onClick={generateQR}>
+                                            <p className="qr-placeholder-title">Scanner is idle</p>
+                                            <button className="primary-btn qr-start-btn" style={{ '--btn-color': '#ff8a3d', '--btn-hover': '#f97316' }} onClick={generateQR}>
                                                 <FaSync style={{ marginRight: 6 }} /> Start 30s Scanner
                                             </button>
                                         </div>
@@ -1029,15 +1494,15 @@ export default function Staff() {
 
                             {/* Right Side: Log */}
                             <div className="att-log-panel">
-                                <div className="scores-section-title" style={{ marginTop: 0 }}><FaUsers className="score-sec-icon" style={{ color: '#f87171' }} /> Live Attendance Log</div>
+                                <div className="scores-section-title attendance-log-title"><FaUsers className="score-sec-icon attendance-log-icon" /> Live Attendance Log</div>
                                 <div className="assignments-table">
                                     <div className="table-head" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                                         <span>Student Name</span>
                                         <span>Subject</span>
                                         <span>Time Scanned</span>
                                     </div>
-                                    {attLog.length === 0 && <div className="empty-state" style={{ padding: '20px' }}>No students scanned yet.</div>}
-                                    <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                                    {attLog.length === 0 && <div className="empty-state attendance-empty">No students scanned yet.</div>}
+                                    <div className="attendance-log-scroll">
                                         {attLog.map(log => (
                                             <div key={log.id} className="table-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', padding: '12px 24px' }}>
                                                 <span className="row-title" style={{ fontSize: '0.9rem' }}>{log.name}</span>
@@ -1048,8 +1513,8 @@ export default function Staff() {
                                     </div>
                                 </div>
                                 {qrValue && (
-                                    <div style={{ marginTop: 15, textAlign: 'center' }}>
-                                        <button className="primary-btn" style={{ '--btn-color': '#10b981', '--btn-hover': '#059669', display: 'inline-flex', fontSize: '0.8rem', padding: '6px 12px' }} onClick={simulateScan}>
+                                    <div className="attendance-demo-wrap">
+                                        <button className="primary-btn attendance-demo-btn" style={{ '--btn-color': '#34d399', '--btn-hover': '#10b981' }} onClick={simulateScan}>
                                             [Demo] Simulate Student Scan
                                         </button>
                                     </div>

@@ -1,97 +1,130 @@
 import { Link } from 'react-router-dom';
-import {
-    MdQuiz,
-    MdSupportAgent,
-} from 'react-icons/md';
-import {
-    FaTrophy,
-    FaChartLine,
-    FaUsers,
-    FaMedal,
-} from 'react-icons/fa';
+import { MdQuiz, MdSupportAgent } from 'react-icons/md';
+import { FaTrophy, FaChartLine, FaUsers, FaMedal } from 'react-icons/fa';
 import './Home.css';
 
 const features = [
-    {
-        icon: <MdQuiz />,
-        title: 'Practice Questions',
-        desc: 'Access thousands of questions across multiple topics and difficulty levels',
-    },
-    {
-        icon: <FaTrophy />,
-        title: 'Mock Tests',
-        desc: 'Take timed mock tests to prepare for your exams with real-time scoring',
-    },
-    {
-        icon: <FaChartLine />,
-        title: 'Progress Tracking',
-        desc: 'Monitor your learning journey with detailed analytics and insights',
-    },
-    {
-        icon: <MdSupportAgent />,
-        title: 'Mentor Support',
-        desc: 'Get personalized guidance from experienced mentors',
-    },
-    {
-        icon: <FaUsers />,
-        title: 'Collaborative Learning',
-        desc: 'Join a community of learners and grow together',
-    },
-    {
-        icon: <FaMedal />,
-        title: 'Gamification',
-        desc: 'Stay motivated with daily streaks, points, and achievements',
-    },
+  {
+    icon: <MdQuiz />,
+    title: 'Practice Questions',
+    desc: 'Move through topic-wise drills with clean progression and quick retries when you need reps.',
+  },
+  {
+    icon: <FaTrophy />,
+    title: 'Mock Tests',
+    desc: 'Simulate the real exam rhythm with timed runs, scoring feedback, and momentum tracking.',
+  },
+  {
+    icon: <FaChartLine />,
+    title: 'Progress Tracking',
+    desc: 'See what is improving, where your accuracy drops, and which subjects need another pass.',
+  },
+  {
+    icon: <MdSupportAgent />,
+    title: 'AI Tutor',
+    desc: 'Get guided explanations fast when you are stuck instead of breaking your study flow.',
+  },
+  {
+    icon: <FaUsers />,
+    title: 'Live Learning',
+    desc: 'Join sessions, revisit recordings, and stay close to your mentors and peer cohort.',
+  },
+  {
+    icon: <FaMedal />,
+    title: 'Student Motivation',
+    desc: 'Streaks, points, and milestones keep the work feeling active and worth returning to daily.',
+  },
+];
+
+const heroStats = [
+  { value: '4', label: 'Core study modes' },
+  { value: '24/7', label: 'On-demand AI help' },
+  { value: '1', label: 'Focused student workspace' },
 ];
 
 export default function Home() {
-    return (
-        <div className="home-page">
-            {/* Hero */}
-            <section className="home-hero">
-                <div className="container">
-                    <h1 className="hero-title">Master Your Learning Journey</h1>
-                    <p className="hero-subtitle">
-                        Practice, test, and track your progress with MindForge Academy's
-                        comprehensive educational platform
-                    </p>
-                    <div className="hero-buttons">
-                        <Link to="/dashboard">
-                            <button className="btn-primary">Get Started Free</button>
-                        </Link>
-                        <Link to="/dashboard">
-                            <button className="btn-secondary">Sign In</button>
-                        </Link>
-                    </div>
-                </div>
-            </section>
+  return (
+    <div className="home-page">
+      <section className="home-hero">
+        <div className="container home-hero-grid">
+          <div className="hero-copy">
+            <span className="eyebrow">Built for serious study</span>
+            <h1 className="hero-title">A sharper learning workspace for students who want momentum.</h1>
+            <p className="hero-subtitle">
+              MindForge Academy brings mock tests, guided practice, AI support, and class resources into one
+              focused command center.
+            </p>
 
-            {/* Features */}
-            <section className="features-section">
-                <div className="container">
-                    <h2 className="section-title">Everything You Need to Succeed</h2>
-                    <div className="features-grid">
-                        {features.map((f, i) => (
-                            <div className="feature-card" key={i}>
-                                <div className="feature-icon">{f.icon}</div>
-                                <h3>{f.title}</h3>
-                                <p>{f.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+            <div className="hero-buttons">
+              <Link to="/dashboard" className="button-primary">Open Dashboard</Link>
+              <Link to="/login" className="button-ghost">Sign In</Link>
+            </div>
 
-            {/* CTA */}
-            <section className="cta-section">
-                <div className="cta-banner">
-                    <h2>Ready to Transform Your Learning?</h2>
-                    <p>Join thousands of students already using MindForge Academy</p>
-                    <Link to="/dashboard">
-                        <button className="btn-cta">Start Learning Today</button>
-                    </Link>
+            <div className="hero-stats">
+              {heroStats.map((item) => (
+                <div key={item.label} className="hero-stat">
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
                 </div>
-            </section>
+              ))}
+            </div>
+          </div>
+
+          <div className="hero-preview">
+            <div className="hero-preview-card top">
+              <span className="preview-kicker">Today&apos;s rhythm</span>
+              <h3>Study with structure, not just tabs.</h3>
+              <ul>
+                <li>Mock test performance snapshots</li>
+                <li>Assignments, timetable, and recordings</li>
+                <li>Fast jump into AI tutor and practice mode</li>
+              </ul>
+            </div>
+
+            <div className="hero-preview-card bottom">
+              <div>
+                <span className="preview-kicker">What students need</span>
+                <p>Less clutter. Better visibility. A UI that helps you start the next useful thing quickly.</p>
+              </div>
+              <span className="preview-pulse" />
+            </div>
+          </div>
         </div>
-    );
+      </section>
+
+      <section className="features-section">
+        <div className="container">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Platform highlights</span>
+              <h2>Everything students reach for most, arranged with more clarity.</h2>
+            </div>
+            <p>We keep the visual language tight and the interactions simple so the study flow stays in front.</p>
+          </div>
+
+          <div className="features-grid">
+            {features.map((feature) => (
+              <div className="feature-card" key={feature.title}>
+                <div className="feature-icon">{feature.icon}</div>
+                <h3>{feature.title}</h3>
+                <p>{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-banner">
+            <div>
+              <span className="eyebrow">Ready to begin</span>
+              <h2>Open the student dashboard and get into the work.</h2>
+            </div>
+            <Link to="/dashboard" className="button-primary">Enter Study Center</Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }

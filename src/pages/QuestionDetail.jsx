@@ -48,18 +48,24 @@ export default function QuestionDetail() {
 
         // ── SAVE PRACTICE SCORE TO HISTORY ──
         const isCorrect = selectedOption === question.correctOption;
+        const practiceRecord = {
+            date: new Date().toISOString(),
+            studentName: studentName || 'Student',
+            subject: subject.name,
+            questionId: `${subjectId}-${questionId}`,
+            questionText: question.statement,
+            correct: isCorrect,
+            difficulty: question.difficulty,
+        };
         try {
             const prev = JSON.parse(localStorage.getItem('mindforge_practice_history') || '[]');
-            prev.push({
-                date: new Date().toISOString(),
-                studentName: studentName || 'Student',
-                subject: subject.name,
-                questionId: `${subjectId}-${questionId}`,
-                questionText: question.statement,
-                correct: isCorrect,
-                difficulty: question.difficulty,
-            });
+            prev.push(practiceRecord);
             localStorage.setItem('mindforge_practice_history', JSON.stringify(prev));
+            fetch('/api/practice-results', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(practiceRecord)
+            }).catch(err => console.error('Failed to store practice result in SQL:', err));
         } catch { /* ignore */ }
 
         // ── LOG MISTAKE IF INCORRECT ──
