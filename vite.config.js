@@ -340,23 +340,40 @@ const recordingsApi = () => {
           const writeStream = fs.createWriteStream(filePath);
 
           req.pipe(writeStream);
-          req.on('end', () => {
-            const stats = fs.statSync(filePath);
-            const metadata = {
-              id,
-              subject: req.headers['x-subject'] ? decodeURIComponent(req.headers['x-subject']) : 'General',
-              topic: req.headers['x-topic'] ? decodeURIComponent(req.headers['x-topic']) : 'Recorded Session',
-              date: new Date().toLocaleDateString(),
-              videoUrl: `/recordings/${id}.${ext}`,
-              size: stats.size
-            };
-            const index = getIndex();
-            index.push(metadata);
-            saveIndex(index);
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ success: true, id }));
+
+          writeStream.on('finish', () => {
+            try {
+              const stats = fs.statSync(filePath);
+              const metadata = {
+                id,
+                subject: req.headers['x-subject'] ? decodeURIComponent(req.headers['x-subject']) : 'General',
+                topic: req.headers['x-topic'] ? decodeURIComponent(req.headers['x-topic']) : 'Recorded Session',
+                date: new Date().toLocaleDateString(),
+                videoUrl: `/recordings/${id}.${ext}`,
+                size: stats.size
+              };
+              const index = getIndex();
+              index.push(metadata);
+              saveIndex(index);
+              console.log(`[Recordings] Saved: ${id}.${ext} (${stats.size} bytes)`);
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: true, id }));
+            } catch (err) {
+              console.error('[Recordings] Failed to save metadata:', err);
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
           });
+
+          writeStream.on('error', (err) => {
+            console.error('[Recordings] Write stream error:', err);
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          });
+
           return;
         }
 
