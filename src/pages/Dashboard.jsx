@@ -256,16 +256,66 @@ export default function Dashboard() {
             if (stored) setTimetable(JSON.parse(stored));
         };
         const loadRecordings = async () => {
+            const results = [];
+
+            // 1. Try server API (works in local dev with Vite plugin)
             try {
                 const res = await fetch("/api/recordings");
                 if (res.ok) {
                     const data = await res.json();
-                    setRecordings(data.sort((a, b) => b.id - a.id));
+                    results.push(...data);
                 }
             } catch (e) {
-                console.error("Failed to load recordings:", e);
+                // Expected in production — no server API available
+            }
+
+            // 2. Load from IndexedDB (works everywhere — local dev AND deployed)
+            try {
+                const idbRecordings = await new Promise((resolve) => {
+                    const request = indexedDB.open('mindforge_stream_db', 2);
+                    request.onupgradeneeded = e => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('recordings')) {
+                            db.createObjectStore('recordings', { keyPath: 'id' });
+                        }
+                    };
+                    request.onsuccess = e => {
+                        const db = e.target.result;
+                        const tx = db.transaction('recordings', 'readonly');
+                        const store = tx.objectStore('recordings');
+                        const getAllReq = store.getAll();
+                        getAllReq.onsuccess = () => {
+                            db.close();
+                            resolve(getAllReq.result || []);
+                        };
+                        getAllReq.onerror = () => { db.close(); resolve([]); };
+                    };
+                    request.onerror = () => resolve([]);
+                });
+
+                // Convert blobs to object URLs and avoid duplicates from server
+                const serverIds = new Set(results.map(r => r.id));
+                for (const rec of idbRecordings) {
+                    if (!serverIds.has(rec.id) && rec.blob) {
+                        const url = URL.createObjectURL(rec.blob);
+                        results.push({
+                            id: rec.id,
+                            subject: rec.subject,
+                            topic: rec.topic,
+                            date: rec.date,
+                            videoUrl: url,
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load recordings from IndexedDB:", e);
+            }
+
+            if (results.length > 0) {
+                setRecordings(results.sort((a, b) => b.id - a.id));
             }
         };
+
 
         const loadActive = () => {
             const stored = localStorage.getItem("mindforge_active_session");

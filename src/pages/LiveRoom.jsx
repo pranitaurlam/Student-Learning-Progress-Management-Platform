@@ -187,12 +187,17 @@ export default function LiveRoom() {
         }
     };
 
+
     const saveRecordingToServer = async () => {
         if (recordedChunksRef.current.length === 0) return;
 
         const mimeType = mediaRecorderRef.current?.mimeType || 'video/webm';
         const blob = new Blob(recordedChunksRef.current, { type: mimeType });
 
+        // ALWAYS save to IndexedDB first — works in both local dev and production deployments
+        await saveRecordingToDB(blob, mimeType);
+
+        // Also try to upload to server (only works in local dev with Vite plugin)
         try {
             const response = await fetch('/api/recordings', {
                 method: 'POST',
@@ -203,42 +208,49 @@ export default function LiveRoom() {
                 },
                 body: blob
             });
-
             if (response.ok) {
-                alert("Recording shared and saved to dashboard successfully!");
-            } else {
-                throw new Error("Upload failed");
+                console.log('[Recording] Also synced to server successfully.');
             }
         } catch (err) {
-            console.error("Recording upload failed:", err);
-            // Fallback to local storage if server is down (though it shouldn't be)
-            saveRecordingToDB(blob);
+            // Expected in production — no server API, IndexedDB is the source of truth
+            console.log('[Recording] Server sync not available (production mode), using IndexedDB only.');
         }
     };
 
-    const saveRecordingToDB = (blob) => {
-        const request = indexedDB.open('mindforge_stream_db', 1);
-        request.onupgradeneeded = e => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('recordings')) {
-                db.createObjectStore('recordings', { keyPath: 'id' });
-            }
-        };
+    const saveRecordingToDB = (blob, mimeType) => {
+        return new Promise((resolve) => {
+            const request = indexedDB.open('mindforge_stream_db', 2);
+            request.onupgradeneeded = e => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('recordings')) {
+                    db.createObjectStore('recordings', { keyPath: 'id' });
+                }
+            };
 
-        request.onsuccess = e => {
-            const db = e.target.result;
-            const tx = db.transaction('recordings', 'readwrite');
-            const store = tx.objectStore('recordings');
-            store.put({
-                id: Date.now(),
-                subject: sessionData?.subject || 'Undefined',
-                topic: sessionData?.topic || 'Recorded Session',
-                date: new Date().toLocaleDateString(),
-                blob: blob
-            });
-            tx.oncomplete = () => db.close();
-        };
+            request.onsuccess = e => {
+                const db = e.target.result;
+                const tx = db.transaction('recordings', 'readwrite');
+                const store = tx.objectStore('recordings');
+                const id = Date.now();
+                store.put({
+                    id,
+                    subject: sessionData?.subject || 'Undefined',
+                    topic: sessionData?.topic || 'Recorded Session',
+                    date: new Date().toLocaleDateString(),
+                    mimeType: mimeType || 'video/webm',
+                    blob: blob
+                });
+                tx.oncomplete = () => {
+                    db.close();
+                    alert('Recording saved! It will appear in the Recorded Classes section on the dashboard.');
+                    resolve();
+                };
+                tx.onerror = () => { db.close(); resolve(); };
+            };
+            request.onerror = () => resolve();
+        });
     };
+
 
     // ── STUDENT SPECIFIC WEBRTC ── //
     const handleStudentOffer = async (offerDesc, pc) => {
