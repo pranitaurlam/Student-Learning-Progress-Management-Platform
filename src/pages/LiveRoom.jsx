@@ -167,7 +167,18 @@ export default function LiveRoom() {
             setIsRecording(false);
         } else {
             recordedChunksRef.current = [];
-            const mr = new MediaRecorder(activeRecordStreamRef.current, { mimeType: 'video/webm' });
+            
+            let mimeType = '';
+            if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
+                mimeType = 'video/webm; codecs=vp9';
+            } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                mimeType = 'video/webm';
+            } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+                mimeType = 'video/mp4';
+            }
+
+            const options = mimeType ? { mimeType } : undefined;
+            const mr = new MediaRecorder(activeRecordStreamRef.current, options);
             mr.ondataavailable = e => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
             mr.onstop = saveRecordingToServer;
             mr.start(500); // chunk every 500ms
@@ -179,14 +190,16 @@ export default function LiveRoom() {
     const saveRecordingToServer = async () => {
         if (recordedChunksRef.current.length === 0) return;
 
-        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const mimeType = mediaRecorderRef.current?.mimeType || 'video/webm';
+        const blob = new Blob(recordedChunksRef.current, { type: mimeType });
 
         try {
             const response = await fetch('/api/recordings', {
                 method: 'POST',
                 headers: {
                     'X-Subject': encodeURIComponent(sessionData?.subject || 'Undefined'),
-                    'X-Topic': encodeURIComponent(sessionData?.topic || 'Recorded Session')
+                    'X-Topic': encodeURIComponent(sessionData?.topic || 'Recorded Session'),
+                    'X-Mime-Type': mimeType
                 },
                 body: blob
             });

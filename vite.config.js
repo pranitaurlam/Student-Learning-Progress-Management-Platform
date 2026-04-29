@@ -332,8 +332,11 @@ const recordingsApi = () => {
         const url = req.url.split('?')[0];
 
         if (url === '/api/recordings' && req.method === 'POST') {
+          if (!fs.existsSync(recordingsDir)) fs.mkdirSync(recordingsDir, { recursive: true });
           const id = Date.now();
-          const filePath = path.join(recordingsDir, `${id}.webm`);
+          const mimeType = req.headers['x-mime-type'] || 'video/webm';
+          const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const filePath = path.join(recordingsDir, `${id}.${ext}`);
           const writeStream = fs.createWriteStream(filePath);
 
           req.pipe(writeStream);
@@ -344,7 +347,7 @@ const recordingsApi = () => {
               subject: req.headers['x-subject'] ? decodeURIComponent(req.headers['x-subject']) : 'General',
               topic: req.headers['x-topic'] ? decodeURIComponent(req.headers['x-topic']) : 'Recorded Session',
               date: new Date().toLocaleDateString(),
-              videoUrl: `/recordings/${id}.webm`,
+              videoUrl: `/recordings/${id}.${ext}`,
               size: stats.size
             };
             const index = getIndex();
@@ -366,14 +369,19 @@ const recordingsApi = () => {
         if (url.startsWith('/api/recordings/') && req.method === 'DELETE') {
           const id = parseInt(url.split('/').pop(), 10);
           const index = getIndex();
-          const filtered = index.filter((recording) => recording.id !== id);
-          const filePath = path.join(recordingsDir, `${id}.webm`);
-          if (fs.existsSync(filePath)) {
-            try {
-              fs.unlinkSync(filePath);
-            } catch (err) {
-              console.error('Delete failed:', err);
-            }
+          const recording = index.find((r) => r.id === id);
+          const filtered = index.filter((r) => r.id !== id);
+          
+          if (recording) {
+              const fileName = recording.videoUrl.split('/').pop();
+              const filePath = path.join(recordingsDir, fileName);
+              if (fs.existsSync(filePath)) {
+                try {
+                  fs.unlinkSync(filePath);
+                } catch (err) {
+                  console.error('Delete failed:', err);
+                }
+              }
           }
           saveIndex(filtered);
           res.statusCode = 200;
