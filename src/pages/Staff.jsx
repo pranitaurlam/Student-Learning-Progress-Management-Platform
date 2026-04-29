@@ -1418,7 +1418,7 @@ export default function Staff() {
                                 <div key={m.id} className="mat-item">
                                     <div className="mat-file-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
                                         <FaVideo />
-                                        <span className="mat-ext">WEBM</span>
+                                        <span className="mat-ext">{m.videoUrl?.includes('.mp4') ? 'MP4' : 'WEBM'}</span>
                                     </div>
                                     <div className="mat-info">
                                         <strong className="mat-title">{m.subject} - {m.topic}</strong>
@@ -1432,7 +1432,7 @@ export default function Staff() {
                                         <a href={m.videoUrl} target="_blank" rel="noopener noreferrer" className="icon-act save" title="Watch Video">
                                             <span style={{ fontSize: 12 }}>▶ Play</span>
                                         </a>
-                                        <button className="icon-act delete" onClick={() => deleteRecording(m.id)} title="Delete Recording">
+                                        <button className="icon-act delete" onClick={() => deleteRecording(m.id, m.fromIDB)} title="Delete Recording">
                                             <FaTrash />
                                         </button>
                                     </div>
