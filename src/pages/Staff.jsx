@@ -433,33 +433,92 @@ export default function Staff() {
     const [recordings, setRecordings] = useState([]);
     useEffect(() => {
         if (activeTab === 'recordings') {
-            const loadRecordings = async () => {
-                try {
-                    const res = await fetch('/api/recordings');
-                    if (res.ok) {
-                        const data = await res.json();
-                        setRecordings(data.sort((a, b) => b.id - a.id));
-                    }
-                } catch (e) {
-                    console.error("Failed to load recordings:", e);
-                }
-            };
-            loadRecordings();
+            loadAllRecordings();
         }
     }, [activeTab]);
 
-    const deleteRecording = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this recording? It will be removed from the student dashboard entirely.")) return;
+    const loadAllRecordings = async () => {
+        const results = [];
 
+        // 1. Try server API (local dev with Vite plugin)
         try {
-            const res = await fetch(`/api/recordings/${id}`, { method: 'DELETE' });
+            const res = await fetch('/api/recordings');
             if (res.ok) {
-                setRecordings(p => p.filter(r => r.id !== id));
+                const data = await res.json();
+                results.push(...data);
             }
         } catch (e) {
-            console.error("Failed to delete recording:", e);
+            // Expected in production
         }
+
+        // 2. Load from IndexedDB (works in production too)
+        try {
+            const idbRecordings = await new Promise((resolve) => {
+                const request = indexedDB.open('mindforge_stream_db', 2);
+                request.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('recordings')) {
+                        db.createObjectStore('recordings', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = e => {
+                    const db = e.target.result;
+                    const tx = db.transaction('recordings', 'readonly');
+                    const store = tx.objectStore('recordings');
+                    const getAllReq = store.getAll();
+                    getAllReq.onsuccess = () => { db.close(); resolve(getAllReq.result || []); };
+                    getAllReq.onerror = () => { db.close(); resolve([]); };
+                };
+                request.onerror = () => resolve([]);
+            });
+
+            const serverIds = new Set(results.map(r => r.id));
+            for (const rec of idbRecordings) {
+                if (!serverIds.has(rec.id) && rec.blob) {
+                    const url = URL.createObjectURL(rec.blob);
+                    results.push({
+                        id: rec.id,
+                        subject: rec.subject,
+                        topic: rec.topic,
+                        date: rec.date,
+                        videoUrl: url,
+                        fromIDB: true,
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load IndexedDB recordings:', e);
+        }
+
+        setRecordings(results.sort((a, b) => b.id - a.id));
     };
+
+    const deleteRecording = async (id, fromIDB) => {
+        if (!window.confirm("Are you sure you want to delete this recording? It will be removed from the student dashboard entirely.")) return;
+
+        // Delete from IndexedDB
+        try {
+            await new Promise((resolve) => {
+                const request = indexedDB.open('mindforge_stream_db', 2);
+                request.onsuccess = e => {
+                    const db = e.target.result;
+                    const tx = db.transaction('recordings', 'readwrite');
+                    tx.objectStore('recordings').delete(id);
+                    tx.oncomplete = () => { db.close(); resolve(); };
+                    tx.onerror = () => { db.close(); resolve(); };
+                };
+                request.onerror = () => resolve();
+            });
+        } catch (e) { }
+
+        // Also delete from server if available
+        try {
+            await fetch(`/api/recordings/${id}`, { method: 'DELETE' });
+        } catch (e) { }
+
+        setRecordings(p => p.filter(r => r.id !== id));
+    };
+
 
     /* ── Attendance ── */
     const [attSession, setAttSession] = useState({ subject: '', label: '' });
