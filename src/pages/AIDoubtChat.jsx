@@ -122,7 +122,7 @@ export default function AIDoubtChat() {
 
 // WARNING: putting your Gemini API key directly in source is insecure. Anyone with access
 // to your frontend bundle can extract and use it. Only do this for local testing or demos.
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY; // <-- Put your API key here
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDf2bhjNPQI3jvjBPp5i26Aq1K4biVaJMA'; // <-- Put your API key here
 const GEMINI_MODEL = 'gemini-flash-latest'; // example model from Google sample
 
 /**
