@@ -227,19 +227,19 @@ async function fetchGeminiReply(userText) {
         console.error('navigator.onLine:', typeof navigator !== 'undefined' ? navigator.onLine : 'unknown');
         console.error('If you see "TypeError: Failed to fetch" in the browser, it commonly means a CORS or network issue.');
 
-        // Local fallback to `/api/ai-chat` (your existing FastAPI canned replies)
+        // Universal fallback to Pollinations AI (works in both dev and Vercel prod without backend)
         try {
-            console.log('[AI] Attempting fallback to local /api/ai-chat endpoint...');
-            const fb = await fetch('/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: userText }) });
+            console.log('[AI] Attempting fallback to open AI model...');
+            const fb = await fetch(`https://text.pollinations.ai/${encodeURIComponent(userText)}`);
             if (fb.ok) {
-                const fbData = await fb.json();
-                console.warn('[AI] Using local fallback /api/ai-chat (not Gemini):', fbData);
-                return fbData.reply || JSON.stringify(fbData);
+                const fbText = await fb.text();
+                console.warn('[AI] Using universal fallback (not Gemini)');
+                if (fbText) return fbText;
+            } else {
+                console.warn('[AI] Universal fallback returned non-ok status:', fb.status, fb.statusText);
             }
-            const fbText = await fb.text().catch(() => 'NO_BODY');
-            console.warn('[AI] Local fallback returned non-ok status:', fb.status, fb.statusText, fbText);
         } catch (fbErr) {
-            console.warn('[AI] Local fallback failed:', fbErr);
+            console.warn('[AI] Universal fallback failed:', fbErr);
         }
 
         throw new Error(networkErr?.message || String(networkErr));
