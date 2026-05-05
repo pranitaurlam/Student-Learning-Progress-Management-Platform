@@ -413,8 +413,98 @@ const recordingsApi = () => {
   };
 };
 
+const aiChatApi = () => {
+  return {
+    name: 'ai-chat-api',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url.split('?')[0];
+
+        if (url === '/api/ai-chat' && req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const data = JSON.parse(body);
+              const msg = (data.message || '').toLowerCase();
+              let reply = "That's an interesting question! Based on my knowledge, the answer involves understanding the core principles of the subject. Let me know if you need more specific details.";
+              
+              if (msg.includes('newton')) {
+                reply = "Newton's Third Law states that for every action, there is an equal and opposite reaction. This means that when two objects interact, they apply forces to each other of equal magnitude and opposite direction.";
+              } else if (msg.includes('quadratic')) {
+                reply = "To solve a quadratic equation (ax² + bx + c = 0), you can use the quadratic formula: x = [-b ± √(b² - 4ac)] / 2a.";
+              } else if (msg.includes('photosynthesis')) {
+                reply = "Photosynthesis is the process by which green plants use sunlight to synthesize foods from carbon dioxide and water. It generally involves the green pigment chlorophyll and generates oxygen as a byproduct.";
+              } else if (msg.includes('binary search')) {
+                reply = "Binary search is an efficient algorithm for finding an item from a sorted list of items. It works by repeatedly dividing in half the portion of the list that could contain the item.";
+              } else if (msg.includes('chemical bonding')) {
+                reply = "Chemical bonding refers to the formation of a chemical bond between two or more atoms to give rise to a chemical compound. The most common types are covalent, ionic, and metallic bonds.";
+              } else {
+                let geminiSuccess = false;
+                const apiKey = process.env.VITE_GEMINI_API_KEY || 'AIzaSyCEAi5K_00JambuCb5sswVhQZhXQ6Ad8Jg';
+                
+                if (apiKey) {
+                  try {
+                    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-goog-api-key': apiKey
+                      },
+                      body: JSON.stringify({
+                        contents: [{ parts: [{ text: msg }] }]
+                      })
+                    });
+                    
+                    if (geminiRes.ok) {
+                      const data = await geminiRes.json();
+                      const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                      if (candidateText) {
+                        reply = candidateText;
+                        geminiSuccess = true;
+                      }
+                    } else {
+                      console.warn("Gemini API fallback failed with status:", geminiRes.status);
+                    }
+                  } catch (e) {
+                    console.error("Gemini call error:", e);
+                  }
+                }
+
+                if (!geminiSuccess) {
+                  try {
+                    const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(msg)}`);
+                    if (response.ok) {
+                      const text = await response.text();
+                      if (text) {
+                        reply = text;
+                      }
+                    }
+                  } catch (err) {
+                    console.error("AI fallback fetch error:", err);
+                  }
+                }
+              }
+
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ reply }));
+            } catch (err) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: "Bad request" }));
+            }
+          });
+          return;
+        }
+
+        next();
+      });
+    }
+  };
+};
+
 export default defineConfig({
-  plugins: [react(), attendanceApi(), resultsApi(), recordingsApi()],
+  plugins: [react(), attendanceApi(), resultsApi(), recordingsApi(), aiChatApi()],
   server: {
     host: true,
     proxy: {

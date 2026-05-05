@@ -122,8 +122,8 @@ export default function AIDoubtChat() {
 
 // WARNING: putting your Gemini API key directly in source is insecure. Anyone with access
 // to your frontend bundle can extract and use it. Only do this for local testing or demos.
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyBCQEcz4s8_uR_rvyUqrkYFqsymI5xcykE'; // <-- Put your API key here
-const GEMINI_MODEL = 'gemini-flash-latest'; // example model from Google sample
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCEAi5K_00JambuCb5sswVhQZhXQ6Ad8Jg';
+const GEMINI_MODEL = 'gemini-2.0-flash';
 
 /**
  * Attempt to use the official @google/genai client (like your sample) via dynamic import.
@@ -138,8 +138,8 @@ async function fetchGeminiReply(userText) {
     const apiKey = GEMINI_API_KEY;
     const model = GEMINI_MODEL;
 
-    if (!apiKey || apiKey === 'AIzaSyBCQEcz4s8_uR_rvyUqrkYFqsymI5xcykE') {
-        throw new Error('Gemini API key not provided in the JSX file. Paste your key into GEMINI_API_KEY.');
+    if (!apiKey) {
+        throw new Error('Gemini API key not provided. Set VITE_GEMINI_API_KEY in your .env file.');
     }
 
     // First try: dynamic import of the official client
@@ -209,12 +209,11 @@ async function fetchGeminiReply(userText) {
         const data = await res.json();
         console.log('[AI] REST response:', data);
 
-        // Typical generateContent response: .candidates[0].output[0].content or .candidates
-        // Try a few common locations
+        // Parse Gemini API response
         const candidateText =
-            data?.candidates?.[0]?.content?.map((c) => c.text || c).join('\n') ||
+            data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('\n') ||
+            data?.candidates?.[0]?.content?.parts?.[0]?.text ||
             data?.candidates?.[0]?.output?.map((o) => (o.text || JSON.stringify(o))).join('\n') ||
-            data?.candidates?.[0]?.output?.[0]?.content?.map((c) => c.text || c).join('\n') ||
             data?.candidates?.[0]?.content?.[0]?.text ||
             data?.outputs?.[0]?.content?.[0]?.text;
 
