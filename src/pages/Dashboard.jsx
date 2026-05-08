@@ -220,6 +220,13 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [streakData, setStreakData] = useState(getStreakData);
     const [analytics, setAnalytics] = useState(() => computeAnalytics(loadHistory()));
+
+    useEffect(() => {
+        const isLoggedIn = localStorage.getItem('mindforge_is_logged_in') === 'true';
+        if (!isLoggedIn) {
+            navigate('/login');
+        }
+    }, [navigate]);
     const [activeSession, setActiveSession] = useState(null);
     const [timetable, setTimetable] = useState([]);
     const [recordings, setRecordings] = useState([]);

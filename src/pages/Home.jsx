@@ -43,6 +43,9 @@ const heroStats = [
 ];
 
 export default function Home() {
+  const isLoggedIn = localStorage.getItem('mindforge_is_logged_in') === 'true';
+  const dashboardLink = isLoggedIn ? '/dashboard' : '/login';
+
   return (
     <div className="home-page">
       <section className="home-hero">
@@ -56,8 +59,8 @@ export default function Home() {
             </p>
 
             <div className="hero-buttons">
-              <Link to="/dashboard" className="button-primary">Open Dashboard</Link>
-              <Link to="/login" className="button-ghost">Sign In</Link>
+              <Link to={dashboardLink} className="button-primary">Open Dashboard</Link>
+              {!isLoggedIn && <Link to="/login" className="button-ghost">Sign In</Link>}
             </div>
 
             <div className="hero-stats">
@@ -121,7 +124,7 @@ export default function Home() {
               <span className="eyebrow">Ready to begin</span>
               <h2>Open the student dashboard and get into the work.</h2>
             </div>
-            <Link to="/dashboard" className="button-primary">Enter Study Center</Link>
+            <Link to={dashboardLink} className="button-primary">Enter Study Center</Link>
           </div>
         </div>
       </section>

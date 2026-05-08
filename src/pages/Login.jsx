@@ -26,6 +26,7 @@ export default function Login() {
     setError('');
 
     if (email === DUMMY_CREDENTIALS.email && password === DUMMY_CREDENTIALS.password) {
+      localStorage.setItem('mindforge_is_logged_in', 'true');
       navigate('/dashboard');
     } else {
       setError('Invalid email or password. Please try again.');

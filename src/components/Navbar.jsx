@@ -11,6 +11,14 @@ export default function Navbar() {
 
   const isStaffView = location.pathname === '/staff';
   const isLiveRoom = location.pathname.startsWith('/live-room');
+  const isLoggedIn = localStorage.getItem('mindforge_is_logged_in') === 'true';
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to log out?')) {
+      localStorage.removeItem('mindforge_is_logged_in');
+      navigate('/');
+    }
+  };
 
   if (isLiveRoom) return null;
 
@@ -52,7 +60,7 @@ export default function Navbar() {
             <>
               <div className="navbar-link-group">
                 <NavLink to="/" end onClick={() => setOpen(false)}>Home</NavLink>
-                <NavLink to="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>
+                <NavLink to={isLoggedIn ? "/dashboard" : "/login"} onClick={() => setOpen(false)}>Dashboard</NavLink>
                 <NavLink to="/ai-chat" onClick={() => setOpen(false)}>AI Tutor</NavLink>
                 <NavLink to="/focus" onClick={() => setOpen(false)}>Focus</NavLink>
                 <NavLink to="/messages" onClick={() => setOpen(false)}>Messages</NavLink>
@@ -62,9 +70,15 @@ export default function Navbar() {
                 <button className="navbar-staff-btn" onClick={handleStaffLogin}>
                   Staff Only
                 </button>
-                <Link to="/login" className="navbar-login-btn" onClick={() => setOpen(false)}>
-                  Sign In
-                </Link>
+                {isLoggedIn ? (
+                  <button className="navbar-logout-btn" onClick={handleLogout}>
+                    Logout
+                  </button>
+                ) : (
+                  <Link to="/login" className="navbar-login-btn" onClick={() => setOpen(false)}>
+                    Sign In
+                  </Link>
+                )}
               </div>
             </>
           ) : (
