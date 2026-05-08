@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { IoSchool } from 'react-icons/io5';
 import { FcGoogle } from 'react-icons/fc';
@@ -15,6 +15,14 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const isLoggedIn = localStorage.getItem('mindforge_is_logged_in') === 'true';
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    }
+  }, [isLoggedIn, navigate]);
 
   const DUMMY_CREDENTIALS = {
     email: 'student@mindforge.com',
@@ -97,14 +105,14 @@ export default function Login() {
 
             <div className="login-divider">or continue with</div>
 
-            <button type="button" className="google-btn" onClick={() => navigate('/dashboard')}>
+            <button type="button" className="google-btn">
               <FcGoogle size={20} />
               Sign in with Google
             </button>
           </form>
 
           <p className="login-footer">
-            Don&apos;t have an account? <Link to="/dashboard">Preview the dashboard</Link>
+            Don&apos;t have an account? <Link to="/">Return to Home</Link>
           </p>
         </div>
       </div>

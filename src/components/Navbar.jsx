@@ -61,9 +61,9 @@ export default function Navbar() {
               <div className="navbar-link-group">
                 <NavLink to="/" end onClick={() => setOpen(false)}>Home</NavLink>
                 <NavLink to={isLoggedIn ? "/dashboard" : "/login"} onClick={() => setOpen(false)}>Dashboard</NavLink>
-                <NavLink to="/ai-chat" onClick={() => setOpen(false)}>AI Tutor</NavLink>
-                <NavLink to="/focus" onClick={() => setOpen(false)}>Focus</NavLink>
-                <NavLink to="/messages" onClick={() => setOpen(false)}>Messages</NavLink>
+                <NavLink to={isLoggedIn ? "/ai-chat" : "/login"} onClick={() => setOpen(false)}>AI Tutor</NavLink>
+                <NavLink to={isLoggedIn ? "/focus" : "/login"} onClick={() => setOpen(false)}>Focus</NavLink>
+                <NavLink to={isLoggedIn ? "/messages" : "/login"} onClick={() => setOpen(false)}>Messages</NavLink>
               </div>
 
               <div className="navbar-actions">

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
@@ -20,6 +20,12 @@ import AttendanceForm from './pages/AttendanceForm';
 import StudyTimer from './pages/StudyTimer';
 import './index.css';
 
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const isLoggedIn = localStorage.getItem('mindforge_is_logged_in') === 'true';
+  return isLoggedIn ? children : <Navigate to="/login" replace />;
+};
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -27,22 +33,25 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/ai-chat" element={<AIDoubtChat />} />
-
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/mock-tests" element={<MockTests />} />
-        <Route path="/mock-tests/:subject/:paperId" element={<MockTestPaper />} />
-        <Route path="/mock-tests/:subject/:paperId/start" element={<MockTestRunner />} />
-        <Route path="/practice-questions" element={<PracticeQuestions />} />
-        <Route path="/practice-questions/:subjectId/:questionId" element={<QuestionDetail />} />
-        <Route path="/planner" element={<Planner />} />
-        <Route path="/live-class" element={<LiveClass />} />
-        <Route path="/live-room/:sessionId" element={<LiveRoom />} />
-        <Route path="/certificates" element={<Certificates />} />
+        
+        {/* Protected Student Routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/ai-chat" element={<ProtectedRoute><AIDoubtChat /></ProtectedRoute>} />
+        <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+        <Route path="/mock-tests" element={<ProtectedRoute><MockTests /></ProtectedRoute>} />
+        <Route path="/mock-tests/:subject/:paperId" element={<ProtectedRoute><MockTestPaper /></ProtectedRoute>} />
+        <Route path="/mock-tests/:subject/:paperId/start" element={<ProtectedRoute><MockTestRunner /></ProtectedRoute>} />
+        <Route path="/practice-questions" element={<ProtectedRoute><PracticeQuestions /></ProtectedRoute>} />
+        <Route path="/practice-questions/:subjectId/:questionId" element={<ProtectedRoute><QuestionDetail /></ProtectedRoute>} />
+        <Route path="/planner" element={<ProtectedRoute><Planner /></ProtectedRoute>} />
+        <Route path="/live-class" element={<ProtectedRoute><LiveClass /></ProtectedRoute>} />
+        <Route path="/live-room/:sessionId" element={<ProtectedRoute><LiveRoom /></ProtectedRoute>} />
+        <Route path="/certificates" element={<ProtectedRoute><Certificates /></ProtectedRoute>} />
+        <Route path="/attendance" element={<ProtectedRoute><AttendanceForm /></ProtectedRoute>} />
+        <Route path="/focus" element={<ProtectedRoute><StudyTimer /></ProtectedRoute>} />
+        
+        {/* Staff Route */}
         <Route path="/staff" element={<Staff />} />
-        <Route path="/attendance" element={<AttendanceForm />} />
-        <Route path="/focus" element={<StudyTimer />} />
       </Routes>
     </BrowserRouter>
   );
