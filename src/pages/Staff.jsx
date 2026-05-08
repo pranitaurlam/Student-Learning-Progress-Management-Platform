@@ -615,15 +615,15 @@ export default function Staff() {
     // Global P2P Listener (Ensures background receipt of signals)
     useEffect(() => {
         let room;
-        const config = { 
+        const config = {
             appId: 'mindforge-p2p-v2',
-            relayUrls: ['wss://relay.nostr.band', 'wss://relay.damus.io', 'wss://nos.lol'] 
+            relayUrls: ['wss://relay.nostr.band', 'wss://relay.damus.io', 'wss://nos.lol']
         };
 
         // Join global room for discovery + session specific room if ready
         room = joinRoom(config, 'mindforge-global-attendance');
         const [, getGlobalAttendance] = room.makeAction('attendance');
-        
+
         const handleData = (data) => {
             console.log("P2P Signal Received:", data);
             setAttLog(prev => {
@@ -1599,7 +1599,7 @@ export default function Staff() {
                             <div className="att-log-panel">
                                 <div className="scores-section-title attendance-log-title" style={{ justifyContent: 'space-between' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                        <FaUsers className="score-sec-icon attendance-log-icon" /> 
+                                        <FaUsers className="score-sec-icon attendance-log-icon" />
                                         Live Attendance Log
                                         <div className="live-pill">LIVE</div>
                                         {peerCount > 0 && <div className="peers-pill">{peerCount} Peers Connected</div>}

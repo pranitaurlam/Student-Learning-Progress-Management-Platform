@@ -12,12 +12,22 @@ const loginHighlights = [
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const DUMMY_CREDENTIALS = {
+    email: 'student@mindforge.com',
+    password: 'password123'
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setError('');
+
+    if (email === DUMMY_CREDENTIALS.email && password === DUMMY_CREDENTIALS.password) {
+      navigate('/dashboard');
+    } else {
+      setError('Invalid email or password. Please try again.');
+    }
   };
 
   return (
@@ -45,6 +55,8 @@ export default function Login() {
             <h2>Sign In</h2>
             <p>Use your student account to enter the dashboard.</p>
           </div>
+
+          {error && <div className="login-error-message">{error}</div>}
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
