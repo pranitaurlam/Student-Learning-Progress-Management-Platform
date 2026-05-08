@@ -105,7 +105,14 @@ export default function Login() {
 
             <div className="login-divider">or continue with</div>
 
-            <button type="button" className="google-btn">
+            <button 
+              type="button" 
+              className="google-btn" 
+              onClick={() => {
+                localStorage.setItem('mindforge_is_logged_in', 'true');
+                navigate('/dashboard');
+              }}
+            >
               <FcGoogle size={20} />
               Sign in with Google
             </button>

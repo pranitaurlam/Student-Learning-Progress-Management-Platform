@@ -16,6 +16,7 @@ export default function Navbar() {
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to log out?')) {
       localStorage.removeItem('mindforge_is_logged_in');
+      localStorage.removeItem('mindforge_is_staff');
       navigate('/');
     }
   };
@@ -25,6 +26,7 @@ export default function Navbar() {
   const handleStaffLogin = () => {
     const password = prompt('Enter Staff Password:');
     if (password === 'Mentors@polaris123') {
+      localStorage.setItem('mindforge_is_staff', 'true');
       setOpen(false);
       navigate('/staff');
     } else if (password !== null) {
@@ -34,6 +36,7 @@ export default function Navbar() {
 
   const handleStaffLogout = () => {
     if (window.confirm('Log out from staff area?')) {
+      localStorage.removeItem('mindforge_is_staff');
       navigate('/');
     }
   };

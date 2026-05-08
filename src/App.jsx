@@ -26,6 +26,12 @@ const ProtectedRoute = ({ children }) => {
   return isLoggedIn ? children : <Navigate to="/login" replace />;
 };
 
+// Staff Route Component
+const StaffRoute = ({ children }) => {
+  const isStaff = localStorage.getItem('mindforge_is_staff') === 'true';
+  return isStaff ? children : <Navigate to="/" replace />;
+};
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -51,7 +57,7 @@ export default function App() {
         <Route path="/focus" element={<ProtectedRoute><StudyTimer /></ProtectedRoute>} />
         
         {/* Staff Route */}
-        <Route path="/staff" element={<Staff />} />
+        <Route path="/staff" element={<StaffRoute><Staff /></StaffRoute>} />
       </Routes>
     </BrowserRouter>
   );
